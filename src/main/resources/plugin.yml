@@ -1,0 +1,4 @@
+name: Compendium
+version: 0.0.1-beta1
+main: mc.compendium.PluginMain
+api-version: 1.20
