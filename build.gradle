@@ -40,6 +40,8 @@ repositories {
     maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
     maven { url 'https://oss.sonatype.org/content/repositories/central' }
 
+    maven { url 'https://maven.elmakers.com/repository/' }
+
     maven { url 'https://jitpack.io/'}
 }
 
