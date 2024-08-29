@@ -9,26 +9,26 @@ import org.bukkit.inventory.ItemStack;
 
 public class AnvilInputClickEvent extends AnvilInputEvent {
 
-    private final ItemStack _clicked_item;
-    private final int _slot;
-    private final ClickType _mouse_click;
+    private final ItemStack clickedItem;
+    private final int slot;
+    private final ClickType mouseClick;
 
     //
 
-    public AnvilInputClickEvent(Event bukkit_event, HumanEntity entity, Inventory inventory, AnvilInput anvil_input, ItemStack clicked_item, int slot, ClickType mouse_click) {
-        super(bukkit_event, entity, inventory, anvil_input);
+    public AnvilInputClickEvent(Event bukkitEvent, HumanEntity entity, Inventory inventory, AnvilInput anvilInput, ItemStack clicked_item, int slot, ClickType mouseClick) {
+        super(bukkitEvent, entity, inventory, anvilInput);
 
-        this._clicked_item = clicked_item;
-        this._slot = slot;
-        this._mouse_click = mouse_click;
+        this.clickedItem = clicked_item;
+        this.slot = slot;
+        this.mouseClick = mouseClick;
     }
 
     //
 
-    public ItemStack clickedItem() { return this._clicked_item; }
+    public ItemStack clickedItem() { return this.clickedItem; }
 
-    public int slot() { return this._slot; }
+    public int slot() { return this.slot; }
 
-    public ClickType mouseClick() { return this._mouse_click; }
+    public ClickType mouseClick() { return this.mouseClick; }
 
 }

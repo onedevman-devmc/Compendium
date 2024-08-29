@@ -8,8 +8,8 @@ import org.bukkit.inventory.Inventory;
 
 public class AnvilInputCloseEvent extends AnvilInputEvent {
 
-    public AnvilInputCloseEvent(Event bukkit_event, HumanEntity entity, Inventory inventory, AnvilInput anvil_input) {
-        super(bukkit_event, entity, inventory, anvil_input);
+    public AnvilInputCloseEvent(Event bukkitEvent, HumanEntity entity, Inventory inventory, AnvilInput anvilInput) {
+        super(bukkitEvent, entity, inventory, anvilInput);
     }
 
     //

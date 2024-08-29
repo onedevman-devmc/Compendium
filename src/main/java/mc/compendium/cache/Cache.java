@@ -18,21 +18,21 @@ public class Cache<Key, Value> implements CacheInterface<Key, Value> {
 
     //
 
-    private record CacheData<Value>(long timestamp, CacheDataPersistency persistency, long delay, Value value) {
+    private record CacheData<Value>(long timestamp, CacheDataPersistence persistence, long delay, Value value) {
 
-        public static <Value> CacheData<Value> of(long timestamp, CacheDataPersistency persistency, long delay, Value value) {
-            return new CacheData<>(timestamp, persistency, delay, value);
+        public static <Value> CacheData<Value> of(long timestamp, CacheDataPersistence persistence, long delay, Value value) {
+            return new CacheData<>(timestamp, persistence, delay, value);
         }
 
     }
 
     //
 
-    private final Map<Key, CacheData<Value>> _cache = new HashMap<>();
+    private final Map<Key, CacheData<Value>> cache = new HashMap<>();
 
-    private long _delay = 0;
+    private long delay = 0;
 
-    private CachePersistency _persistency = CachePersistency.VOLATILE;
+    private CachePersistence persistence = CachePersistence.VOLATILE;
 
     //
 
@@ -40,8 +40,8 @@ public class Cache<Key, Value> implements CacheInterface<Key, Value> {
 
     }
 
-    public Cache(CachePersistency persistency) {
-        this.persistency(persistency);
+    public Cache(CachePersistence persistence) {
+        this.persistence(persistence);
     }
 
     public Cache(long delay) {
@@ -58,7 +58,7 @@ public class Cache<Key, Value> implements CacheInterface<Key, Value> {
         if(cleanup)
             this.cleanup();
 
-        return this._cache.containsKey(key);
+        return this.cache.containsKey(key);
     }
 
     //
@@ -68,24 +68,24 @@ public class Cache<Key, Value> implements CacheInterface<Key, Value> {
     }
 
     private void store(Key key, Value value, boolean cleanup) {
-        this.store(key, value, this.persistency().getDataPersistency(), cleanup);
+        this.store(key, value, this.persistence().getDataPersistence(), cleanup);
     }
 
-    public void store(Key key, Value value, CacheDataPersistency persistency) {
-        this.store(key, value, persistency, true);
+    public void store(Key key, Value value, CacheDataPersistence persistence) {
+        this.store(key, value, persistence, true);
     }
 
-    private void store(Key key, Value value, CacheDataPersistency persistency, boolean cleanup) {
-        this.store(key, value, persistency, -1, cleanup);
+    private void store(Key key, Value value, CacheDataPersistence persistence, boolean cleanup) {
+        this.store(key, value, persistence, -1, cleanup);
     }
 
-    public void store(Key key, Value value, CacheDataPersistency persistency, long delay) {
-        this.store(key, value, persistency, delay, true);
+    public void store(Key key, Value value, CacheDataPersistence persistence, long delay) {
+        this.store(key, value, persistence, delay, true);
     }
 
-    private void store(Key key, Value value, CacheDataPersistency persistency, long delay, boolean cleanup) {
+    private void store(Key key, Value value, CacheDataPersistence persistence, long delay, boolean cleanup) {
         this.withdraw(key, cleanup);
-        this._cache.put(key, CacheData.of(Cache.TIMESTAMP(), persistency, delay, value));
+        this.cache.put(key, CacheData.of(Cache.TIMESTAMP(), persistence, delay, value));
     }
 
     //
@@ -95,7 +95,7 @@ public class Cache<Key, Value> implements CacheInterface<Key, Value> {
     }
 
     private Value get(Key key, boolean cleanup) {
-        return this.contains(key, cleanup) ? this._cache.get(key).value() : null;
+        return this.contains(key, cleanup) ? this.cache.get(key).value() : null;
     }
 
     //
@@ -105,28 +105,28 @@ public class Cache<Key, Value> implements CacheInterface<Key, Value> {
     }
 
     private Value withdraw(Key key, boolean cleanup) {
-        return this.contains(key, cleanup) ? this._cache.remove(key).value() : null;
+        return this.contains(key, cleanup) ? this.cache.remove(key).value() : null;
     }
 
     //
 
-    public long delay() { return this._delay; }
-    public long delay(long ms) { this._delay = ms; return this.delay(); }
+    public long delay() { return this.delay; }
+    public long delay(long ms) { this.delay = ms; return this.delay(); }
 
-    public CachePersistency persistency() { return this._persistency; }
-    public CachePersistency persistency(CachePersistency persistency) { this._persistency = persistency; return this.persistency(); }
+    public CachePersistence persistence() { return this.persistence; }
+    public CachePersistence persistence(CachePersistence persistence) { this.persistence = persistence; return this.persistence(); }
 
     //
 
-    public CacheDataPersistency persistencyOf(Key key) {
-        return this.persistencyOf(key, true);
+    public CacheDataPersistence persistenceOf(Key key) {
+        return this.persistenceOf(key, true);
     }
 
-    private CacheDataPersistency persistencyOf(Key key, boolean cleanup) {
+    private CacheDataPersistence persistenceOf(Key key, boolean cleanup) {
         if(!this.contains(key, cleanup))
             return null;
 
-        return this._cache.get(key).persistency().get(this);
+        return this.cache.get(key).persistence().get(this);
     }
 
     //
@@ -139,7 +139,7 @@ public class Cache<Key, Value> implements CacheInterface<Key, Value> {
         if(!this.contains(key, cleanup))
             return 0;
 
-        long delay = this._cache.get(key).delay();
+        long delay = this.cache.get(key).delay();
 
         if(delay < 0)
             return this.delay();
@@ -167,7 +167,7 @@ public class Cache<Key, Value> implements CacheInterface<Key, Value> {
         if(!this.contains(key, cleanup))
             return true;
 
-        return (Cache.TIMESTAMP() - this._cache.get(key).timestamp()) > delay;
+        return (Cache.TIMESTAMP() - this.cache.get(key).timestamp()) > delay;
     }
 
     //
@@ -177,8 +177,8 @@ public class Cache<Key, Value> implements CacheInterface<Key, Value> {
     }
 
     public void cleanup(boolean force) {
-        for(Key key : this._cache.keySet())
-            if(this.expired(key, false) && (this.persistencyOf(key, false).equals(CacheDataPersistency.VOLATILE) || force))
+        for(Key key : this.cache.keySet())
+            if(this.expired(key, false) && (this.persistenceOf(key, false).equals(CacheDataPersistence.VOLATILE) || force))
                 this.withdraw(key, false);
     }
 

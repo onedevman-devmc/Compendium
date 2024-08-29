@@ -6,18 +6,18 @@ public class Arrays {
         return join(array, separator, 0);
     }
 
-    public static <T> String join(T[] array, String separator, int included_start) {
-        return join(array, separator, included_start, array.length);
+    public static <T> String join(T[] array, String separator, int includedStart) {
+        return join(array, separator, includedStart, array.length);
     }
 
-    public static <T> String join(T[] array, String separator, int included_start, int excluded_end) {
+    public static <T> String join(T[] array, String separator, int includedStart, int excludedEnd) {
         StringBuilder result = new StringBuilder();
 
-        for(int i = included_start; i < excluded_end-1; ++i)
+        for(int i = includedStart; i < excludedEnd-1; ++i)
             result.append(String.valueOf(array[i])).append(separator);
 
-        if(excluded_end > 0)
-            result.append(String.valueOf(array[excluded_end - 1]));
+        if(excludedEnd > 0)
+            result.append(String.valueOf(array[excludedEnd - 1]));
 
         return result.toString();
     }

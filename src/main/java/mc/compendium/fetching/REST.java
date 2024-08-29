@@ -28,17 +28,17 @@ public class REST {
 
         //
 
-        private final String _method;
+        private final String method;
 
         //
 
         private METHOD(String method) {
-            this._method = method;
+            this.method = method;
         }
 
         //
 
-        public String get() { return this._method; }
+        public String get() { return this.method; }
 
     }
 
@@ -63,9 +63,9 @@ public class REST {
     //
 
     public static Response request(String endpoint, METHOD method, Map<String, String> headers) throws IOException {
-        URL request_url = new URL(endpoint.toString());
+        URL requestUrl = new URL(endpoint.toString());
 
-        HttpURLConnection conn = (HttpURLConnection) request_url.openConnection();
+        HttpURLConnection conn = (HttpURLConnection) requestUrl.openConnection();
         conn.setInstanceFollowRedirects(true);
 
         //
@@ -74,13 +74,13 @@ public class REST {
 
         //
 
-        List<String> header_name_list = new ArrayList<>(headers.keySet());
-        int header_name_list_length = header_name_list.size();
+        List<String> headerNameList = new ArrayList<>(headers.keySet());
+        int headerNameListLength = headerNameList.size();
 
-        String header_name;
-        for(int i = 0; i < header_name_list_length; ++i) {
-            header_name = header_name_list.get(i);
-            conn.setRequestProperty(header_name, headers.get(header_name));
+        String headerName;
+        for(int i = 0; i < headerNameListLength; ++i) {
+            headerName = headerNameList.get(i);
+            conn.setRequestProperty(headerName, headers.get(headerName));
         }
 
         conn.setConnectTimeout(5000);
@@ -88,32 +88,32 @@ public class REST {
 
         //
 
-        StringBuffer body_content_constructor = null;
+        StringBuffer bodyContentConstructor = null;
 
         if(method != METHOD.HEAD) {
-            InputStream conn_in = conn.getResponseCode() > 299 ? conn.getErrorStream() : conn.getInputStream();
-            BufferedReader response_body_reader = new BufferedReader(new InputStreamReader(conn_in));
+            InputStream connectionIn = conn.getResponseCode() > 299 ? conn.getErrorStream() : conn.getInputStream();
+            BufferedReader responseBodyReader = new BufferedReader(new InputStreamReader(connectionIn));
 
-            body_content_constructor = new StringBuffer();
+            bodyContentConstructor = new StringBuffer();
             String line;
-            while ((line = response_body_reader.readLine()) != null) {
-                body_content_constructor.append(line);
+            while ((line = responseBodyReader.readLine()) != null) {
+                bodyContentConstructor.append(line);
             }
 
-            conn_in.close();
+            connectionIn.close();
         }
 
-        Map<String, String> response_headers = new HashMap<>();
+        Map<String, String> responseHeaders = new HashMap<>();
         for (Map.Entry<String, List<String>> entries : conn.getHeaderFields().entrySet()) {
             StringBuilder value = new StringBuilder();
 
-            List<String> value_parts = entries.getValue();
-            int value_part_count = value_parts.size();
+            List<String> valueParts = entries.getValue();
+            int valuePartCount = valueParts.size();
 
-            for (int i = 0; i < value_part_count; ++i)
-                value.append(value_parts.get(i)).append(i < value_part_count - 1 ? "," : "");
+            for (int i = 0; i < valuePartCount; ++i)
+                value.append(valueParts.get(i)).append(i < valuePartCount - 1 ? "," : "");
 
-            response_headers.put(entries.getKey(), value.toString());
+            responseHeaders.put(entries.getKey(), value.toString());
         }
 
         conn.disconnect();
@@ -121,8 +121,8 @@ public class REST {
         return new Response(
             conn.getResponseCode(),
             conn.getResponseMessage(),
-            response_headers,
-            body_content_constructor == null ? null : body_content_constructor.toString()
+            responseHeaders,
+            bodyContentConstructor == null ? null : bodyContentConstructor.toString()
         );
     }
 

@@ -1,40 +1,107 @@
 package mc.compendium.events;
 
+import mc.compendium.protocol.events.ProtocolEvent;
 import mc.compendium.types.Pair;
-import mc.compendium.utils.reflection.MethodsUtil;
+import mc.compendium.reflection.MethodUtil;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.*;
 
-public abstract class EventManager<
+public class EventManager<
     EventType extends Event,
     EventListenerType extends EventListener
-> implements EventManagerInterface<EventType, EventListenerType> {
+> implements EventManagerDelegation<EventType, EventListenerType> {
+
+    //
 
     private final List<EventListenerType> listeners = new ArrayList<>();
+    private final Map<EventHandlerPriority, Map<Integer, Pair<EventListenerType, Method>>> prioritizedEventHandlerMap;
+
+    private final Class<? extends Event> eventType;
 
     //
 
-//    public EventManager() {}
+    public EventManager(Class<EventType> eventType) {
+        this.eventType = eventType;
+
+        //
+
+        Map<EventHandlerPriority, Map<Integer, Pair<EventListenerType, Method>>> result = new HashMap<>();
+
+        for(EventHandlerPriority priority : EventHandlerPriority.DECREASING_ORDER)
+            result.put(priority, new HashMap<>());
+
+
+
+        this.prioritizedEventHandlerMap = Collections.unmodifiableMap(result);
+    }
 
     //
 
+    private boolean isEventHandler(Method method) {
+        if(!method.isAnnotationPresent(EventHandler.class) || method.getParameterCount() != 1) return false;
+
+        Type parameterType = method.getParameters()[0].getParameterizedType();
+        Class<?> rawParameterType = (Class<?>) (parameterType instanceof ParameterizedType parameterizedParameterType ? parameterizedParameterType.getRawType() : parameterType);
+
+        return eventType.isAssignableFrom(rawParameterType);
+    }
+
+    private List<Method> getEventHandlers(EventListenerType listener) {
+        return MethodUtil.getInstance().filter(listener, this::isEventHandler);
+    }
+
+    private void mapEventHandlers(EventListenerType listener) {
+        for(Method eventHandler : getEventHandlers(listener))
+            this.prioritizedEventHandlerMap.get(eventHandler.getAnnotation(EventHandler.class).priority()).put(eventHandler.hashCode(), Pair.of(listener, eventHandler));
+    }
+
+    private void unmapEventHandlers(EventListenerType listener) {
+        for(Method eventHandler : getEventHandlers(listener))
+            this.prioritizedEventHandlerMap.get(eventHandler.getAnnotation(EventHandler.class).priority()).remove(eventHandler.hashCode());
+    }
+
+    private void unmapAllEventHandlers() {
+        for(EventHandlerPriority priority : EventHandlerPriority.DECREASING_ORDER)
+            this.prioritizedEventHandlerMap.get(priority).clear();
+    }
+
+    //
+
+    @Override
+    public EventManager<EventType, EventListenerType> delegate() {
+        return this;
+    }
+
+    //
+
+    @Override
     public List<EventListenerType> getListeners() {
         return Collections.unmodifiableList(this.listeners);
     }
 
+    @Override
     public void addListener(EventListenerType listener) {
+        if(this.listeners.contains(listener)) return;
+
+        this.mapEventHandlers(listener);
         this.listeners.add(listener);
     }
 
+    @Override
     public void removeListener(EventListenerType listener) {
+        if(!this.listeners.contains(listener)) return;
+
+        this.mapEventHandlers(listener);
         this.listeners.remove(listener);
     }
 
+    @Override
     public void removeAllListeners() {
-        int listener_count = this.listeners.size();
-        if(listener_count > 0) listeners.subList(0, listener_count).clear();
+        this.listeners.clear();
+        this.unmapAllEventHandlers();
     }
 
     //
@@ -42,55 +109,38 @@ public abstract class EventManager<
     /*
      * Call event among all registered listeners and returns if event is accepted (not cancelled).
      */
-    public boolean call(EventType event) {
-        EventHandlerPriority[] priorities = EventHandlerPriority.values();
+    @Override
+    public boolean handle(EventType event) {
+        for(EventHandlerPriority priority : EventHandlerPriority.DECREASING_ORDER) {
+            Collection<Pair<EventListenerType, Method>> eventHandlerPairs = this.prioritizedEventHandlerMap.get(priority).values();
 
-        Map<EventHandlerPriority, List<Pair<EventListenerType, Method>>> prioritized_event_handlers = new HashMap<>();
+            for(Pair<EventListenerType, Method> eventHandlerPair : eventHandlerPairs) {
+                EventListenerType listener = eventHandlerPair.first();
+                Method eventHandler = eventHandlerPair.last();
 
-        for(EventHandlerPriority priority : priorities)
-            prioritized_event_handlers.put(priority, new ArrayList<>());
+                Class<?> eventType = event.getClass();
+                Type eventHandlerParameterType = eventHandler.getParameters()[0].getParameterizedType();
 
-        for(EventListenerType listener : this.listeners) {
-            MethodsUtil.filter(listener, (event_handler) -> {
-                if(!event_handler.isAnnotationPresent(EventHandler.class))
-                    return false;
+                if(event.isCompatible(eventHandlerParameterType)) {
+                    EventHandler eventHandlerProperties = eventHandler.getAnnotation(EventHandler.class);
 
-                EventHandler event_handler_props = event_handler.getAnnotation(EventHandler.class);
-
-                if(event_handler.getParameterCount() > 0 && event_handler.getParameters()[0].getType().equals(event.getClass()))
-                    prioritized_event_handlers.get(event_handler_props.priority()).add(Pair.of(listener, event_handler));
-
-                return false;
-            });
-        }
-
-        EventListenerType listener;
-        Method event_handler;
-
-        for(EventHandlerPriority priority : priorities) {
-            List<Pair<EventListenerType, Method>> event_handler_pairs = prioritized_event_handlers.get(priority);
-
-            for(Pair<EventListenerType, Method> event_handler_pair : event_handler_pairs) {
-                listener = event_handler_pair.first();
-                event_handler = event_handler_pair.last();
-
-                EventHandler event_handler_props = event_handler.getAnnotation(EventHandler.class);
-
-                if(!event.cancelled() || event_handler_props.ignoreCancelled()) {
-                    try {
-                        MethodsUtil.invoke(listener, event_handler, event);
-                    } catch (InvocationTargetException | IllegalAccessException e) {
-                        throw new RuntimeException(e);
+                    if(!event.cancellable() || !event.cancelled() || eventHandlerProperties.ignoreCancelled()) {
+                        try {
+                            MethodUtil.getInstance().invoke(listener, eventHandler, event);
+                        } catch(Exception e) {
+                            throw new RuntimeException(e);
+                        }
                     }
                 }
             }
         }
 
-        return event.cancelled();
+        return !event.cancelled();
     }
 
-    public <E> boolean call(E event) {
-        return this.call((EventType) event);
+    @Override
+    public <E> boolean handle(E event) {
+        return this.handle((EventType) event);
     }
 
 }

@@ -1,6 +1,5 @@
 package mc.compendium.utils.resources.configuration;
 
-import mc.compendium.utils.Lists;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.Plugin;
@@ -21,8 +20,8 @@ public class ConfigParser {
 
     //
 
-    private static String parseWithToken(String str, String token_key, Object token_value) {
-        return str.replaceAll("%" + token_key.replaceAll("\\{", "\\\\{").replaceAll("\\}", "\\\\}") + "%", String.valueOf(token_value));
+    private static String parseWithToken(String str, String tokenKey, Object tokenValue) {
+        return str.replaceAll("%" + tokenKey.replaceAll("\\{", "\\\\{").replaceAll("\\}", "\\\\}") + "%", String.valueOf(tokenValue));
     }
 
     //
@@ -34,32 +33,32 @@ public class ConfigParser {
 
         public final String tokenKey;
 
-        public final Map<ConfigParser, String> token_value_by_parser = new HashMap<>();
+        public final Map<ConfigParser, String> tokenValueByParser = new HashMap<>();
 
         //
 
-        NativeToken(String token_key) {
-            this.tokenKey = token_key;
+        NativeToken(String tokenKey) {
+            this.tokenKey = tokenKey;
         }
 
         //
 
-        public void setValue(ConfigParser parser, String token_value) {
+        public void setValue(ConfigParser parser, String tokenValue) {
             this.removeValue(parser);
-            this.token_value_by_parser.put(parser, token_value);
+            this.tokenValueByParser.put(parser, tokenValue);
         }
 
         public void removeValue(ConfigParser parser) {
-            this.token_value_by_parser.remove(parser);
+            this.tokenValueByParser.remove(parser);
         }
 
         public String parse(String str, ConfigParser parser) {
-            String token_value = this.token_value_by_parser.get(parser);
-            return this.parse(str, token_value == null ? "" : token_value);
+            String tokenValue = this.tokenValueByParser.get(parser);
+            return this.parse(str, tokenValue == null ? "" : tokenValue);
         }
 
-        public String parse(String str, Object token_value) {
-            return ConfigParser.parseWithToken(str, this.tokenKey, token_value);
+        public String parse(String str, Object tokenValue) {
+            return ConfigParser.parseWithToken(str, this.tokenKey, tokenValue);
         }
 
     }
@@ -75,8 +74,8 @@ public class ConfigParser {
 
     //
 
-    public ConfigParser(Plugin plugin_instance) {
-        this.pluginInstance = plugin_instance;
+    public ConfigParser(Plugin pluginInstance) {
+        this.pluginInstance = pluginInstance;
 
         //
 
@@ -88,11 +87,7 @@ public class ConfigParser {
     public YamlConfiguration config() { return this.config; }
     public void setConfig(YamlConfiguration config) {
         this.config = config;
-
-        List<String> keys = Lists.toList(this.tokenMap.keySet());
-        for(String key : keys)
-            this.tokenMap.remove(key);
-
+        this.tokenMap.clear();
         this.mapTokens();
     }
 
@@ -110,15 +105,13 @@ public class ConfigParser {
     private void mapTokens() {
         if(this.tokenSection == null) return;
 
-        List<String> token_key_list = Lists.toList(tokenSection.getKeys(false));
+        for(String tokenKey : tokenSection.getKeys(false))
+            this.tokenMap.put(tokenKey, tokenSection.getString(tokenKey));
 
-        for(String token_key : token_key_list)
-            this.tokenMap.put(token_key, tokenSection.getString(token_key));
-
-        for(String config_key : this.config().getKeys(true)) {
-            this.tokenMap.put("#" + config_key, this.config().get(config_key));
-            if(config_key.startsWith("."))
-                this.tokenMap.put("#" + config_key.substring(1), this.config().get(config_key));
+        for(String configKey : this.config().getKeys(true)) {
+            this.tokenMap.put("#" + configKey, this.config().get(configKey));
+            if(configKey.startsWith("."))
+                this.tokenMap.put("#" + configKey.substring(1), this.config().get(configKey));
         }
     }
 
@@ -129,12 +122,10 @@ public class ConfigParser {
     }
 
     public String parse(String message, Map<String, Object> tokens) {
-        List<Map.Entry<String, Object>> token_list = Lists.toList(tokens.entrySet());
+        for(NativeToken nativeToken : NativeToken.values())
+            message = nativeToken.parse(message, this);
 
-        for(NativeToken native_token : NativeToken.values())
-            message = native_token.parse(message, this);
-
-        for(Map.Entry<String, Object> token : token_list)
+        for(Map.Entry<String, Object> token : tokens.entrySet())
             message = ConfigParser.parseWithToken(message, token.getKey(), token.getValue());
 
         return message;

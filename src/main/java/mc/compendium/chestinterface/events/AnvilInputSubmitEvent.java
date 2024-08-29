@@ -7,18 +7,18 @@ import org.bukkit.inventory.Inventory;
 
 public class AnvilInputSubmitEvent extends AnvilInputEvent {
 
-    private final String _text;
+    private final String text;
 
     //
 
-    public AnvilInputSubmitEvent(Event bukkit_event, HumanEntity entity, Inventory inventory, AnvilInput anvil_input, String text) {
-        super(bukkit_event, entity, inventory, anvil_input);
+    public AnvilInputSubmitEvent(Event bukkitEvent, HumanEntity entity, Inventory inventory, AnvilInput anvilInput, String text) {
+        super(bukkitEvent, entity, inventory, anvilInput);
 
-        this._text = text;
+        this.text = text;
     }
 
     //
 
-    public String text() { return this._text; }
+    public String text() { return this.text; }
 
 }

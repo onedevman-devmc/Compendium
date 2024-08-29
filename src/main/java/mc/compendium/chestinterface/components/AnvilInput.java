@@ -1,32 +1,30 @@
 package mc.compendium.chestinterface.components;
 
-//import com.comphenix.packetwrapper.WrapperPlayClientItemName;
-//import com.comphenix.protocol.PacketType;
-//import com.comphenix.protocol.ProtocolLibrary;
-//import com.comphenix.protocol.events.ListenerPriority;
-//import com.comphenix.protocol.events.PacketAdapter;
-//import com.comphenix.protocol.events.PacketEvent;
-
-import mc.compendium.chestinterface.bukkit.BukkitChestInterfaceIdentifier;
+import mc.compendium.chestinterface.bukkit.ChestInterfaceBukkitIdentifier;
 import mc.compendium.chestinterface.components.configurations.AnvilInputConfig;
+import mc.compendium.chestinterface.components.configurations.ChestIconConfig;
 import mc.compendium.chestinterface.events.*;
 import mc.compendium.events.EventHandler;
 import mc.compendium.events.EventHandlerPriority;
+import mc.compendium.protocol.PacketWrapper;
+import mc.compendium.protocol.ProtocolManager;
+import mc.compendium.protocol.events.IncomingPacketEvent;
+import mc.compendium.protocol.events.ProtocolEventListener;
 import mc.compendium.types.Pair;
+import net.minecraft.network.protocol.game.PacketPlayInItemName;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.plugin.Plugin;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-public class AnvilInput extends ChestInterface<AnvilInputEvent> {
+public class AnvilInput extends ChestInterface<AnvilInputConfig, AnvilInputEvent<?>> implements ProtocolEventListener {
 
     public static final int DEFAULT_ANVIL_FIRST_INPUT_SLOT = 0;
     public static final int DEFAULT_ANVIL_SECOND_INPUT_SLOT = 1;
@@ -34,119 +32,77 @@ public class AnvilInput extends ChestInterface<AnvilInputEvent> {
 
     //
 
-    private final AnvilInput _this = this;
+    @EventHandler
+    private void onPlayerItemRenaming(IncomingPacketEvent<PacketPlayInItemName> event) throws IllegalAccessException {
+        String playerUuid = event.getPlayer().getUniqueId().toString();
+        if(!this.processingInputPlayers.containsKey(playerUuid)) return;
 
-    public final AnvilInputConfig config;
+        Pair<Inventory, String> pair = this.processingInputPlayers.remove(playerUuid);
+        if(!event.getPlayer().getOpenInventory().getTopInventory().equals(pair.first())) return;
 
-//    private final PacketAdapter INPUT_PACKET_INTERCEPTOR = new PacketAdapter(
-//            PluginMain.instance(),
-//            ListenerPriority.HIGHEST,
-//            List.of(
-//                    PacketType.Play.Client.ITEM_NAME
-//            )
-//    ) {
-//        @Override
-//        public void onPacketReceiving(PacketEvent event) {
-//            String player_uuid = event.getPlayer().getUniqueId().toString();
-//            if(_this.processing_input_players.containsKey(player_uuid)) {
-//                Pair<Inventory, String> pair = _this.processing_input_players.remove(player_uuid);
-//
-//                if(event.getPlayer().getOpenInventory().getTopInventory().equals(pair.first())) {
-//                    WrapperPlayClientItemName packet = new WrapperPlayClientItemName(event.getPacket());
-//
-//                    _this.processing_input_players.put(player_uuid, Pair.of(pair.first(), packet.getItemName()));
-//                }
-//            }
-//        }
-//    };
+        PacketWrapper<PacketPlayInItemName> wrapper = new PacketWrapper<>(event.getPacket());
+        String inputText = wrapper.all(String.class).get(0);
+
+        this.processingInputPlayers.put(playerUuid, Pair.of(pair.first(), inputText));
+    }
 
     //
 
-    private final Map<String, Pair<Inventory, String>> processing_input_players = new HashMap<>();
+    private final Map<String, Pair<Inventory, String>> processingInputPlayers = new HashMap<>();
 
     //
 
-    public AnvilInput(String title) {
-        this(title, List.of(), "");
-    }
-
-    public AnvilInput(String title, boolean silent) {
-        this(title, List.of(), "", silent);
-    }
-
-    public AnvilInput(String title, String description) {
-        this(title, List.of(description.split("\n")), "");
-    }
-
-    public AnvilInput(String title, String description, boolean silent) {
-        this(title, List.of(description.split("\n")), "", silent);
-    }
-
-    public AnvilInput(String title, List<String> description) {
-        this(title, description, "");
-    }
-
-    public AnvilInput(String title, List<String> description, boolean silent) {
-        this(title, description, "", silent);
-    }
-
-    public AnvilInput(String title, String description, String default_value) {
-        this(title, List.of(description.split("\n")), default_value);
-    }
-    public AnvilInput(String title, String description, String default_value, boolean silent) {
-        this(title, List.of(description.split("\n")), default_value, silent);
-    }
-
-    public AnvilInput(String title, List<String> description, String default_value) {
-        this(title, description, default_value, false);
-    }
-
-    public AnvilInput(String title, List<String> description, String default_value, boolean silent) {
-        this(new AnvilInputConfig(title, description, default_value, silent));
-    }
-
-    public AnvilInput(AnvilInputConfig config) {
-        this.config = config;
-
-        this.config.setInputIcon(new ChestIcon(Material.NAME_TAG, this.config.defaultValue(), 1, this.config.description()));
+    public AnvilInput(Plugin plugin, AnvilInputConfig config) {
+        super(config, (Class<AnvilInputEvent<?>>) ((Class<?>) AnvilInputEvent.class));
 
         //
 
-//        if(!ProtocolLibrary.getProtocolManager().getPacketListeners().contains(this.INPUT_PACKET_INTERCEPTOR))
-//            ProtocolLibrary.getProtocolManager().addPacketListener(this.INPUT_PACKET_INTERCEPTOR);
+        this.config().setInputIcon(new ChestIcon(new ChestIconConfig(Material.NAME_TAG, this.config().defaultValue(), 1, this.config().description(), false)));
 
-        this.addListener(new ChestInterfaceEventListener() {
-            @EventHandler
+        //
+
+        ProtocolManager protocolManager = new ProtocolManager(plugin);
+        protocolManager.enable();
+        protocolManager.addListener(this);
+
+        AnvilInput _this = this;
+
+        this.addListener(new InterfaceEventListener() {
+            @EventHandler(priority = EventHandlerPriority.HIGHEST)
             public void onOpen(AnvilInputOpenEvent event) {
-                _this.processing_input_players.put(event.entity().getUniqueId().toString(), Pair.of(event.inventory(), ""));
+                _this.processingInputPlayers.put(event.entity().getUniqueId().toString(), Pair.of(event.inventory(), ""));
             }
 
-            @EventHandler
+            @EventHandler(priority = EventHandlerPriority.LOWEST)
             public void onClose(AnvilInputCloseEvent event) {
-                if(event.entity() instanceof Player && !_this.config.silent())
+                if(event.entity() instanceof Player && !_this.config().silent())
                     playInteractionSound((Player) event.entity());
 
-                _this.processing_input_players.remove(event.entity().getUniqueId().toString());
+                _this.processingInputPlayers.remove(event.entity().getUniqueId().toString());
             }
 
             @EventHandler(priority = EventHandlerPriority.HIGHEST, ignoreCancelled = true)
-            public void onClick(AnvilInputClickEvent event) throws InvocationTargetException, IllegalAccessException {
+            public void onClick(AnvilInputClickEvent event) {
                 if(event.entity() instanceof Player player) {
-
-
                     player.setExp(player.getExp());
 
                     if(event.slot() != AnvilInput.DEFAULT_ANVIL_OUTPUT_SLOT) return;
 
-                    if(!_this.config.silent())
+                    if(!_this.config().silent())
                         playInteractionSound(player);
 
-                    Pair<Inventory, String> pair = _this.processing_input_players.get(event.entity().getUniqueId().toString());
+                    Pair<Inventory, String> pair = _this.processingInputPlayers.get(event.entity().getUniqueId().toString());
+                    String inputText = pair.last();
 
-//                    if(_this.processing_input_players.keySet().isEmpty())
-//                        ProtocolLibrary.getProtocolManager().removePacketListener(_this.INPUT_PACKET_INTERCEPTOR);
+                    AnvilInputSubmitEvent inputEvent = new AnvilInputSubmitEvent(null, event.entity(), event.inventory(), _this, inputText);
+                    boolean accepted = _this.handle(inputEvent);
 
-                    _this.call(new AnvilInputSubmitEvent(null, event.entity(), event.inventory(), _this, pair.last()));
+                    player.closeInventory();
+
+                    if(!accepted) {
+                        event.setCancelled(true);
+                        player.openInventory(_this.toBukkit(inputText));
+                    }
                 }
             }
         });
@@ -154,8 +110,8 @@ public class AnvilInput extends ChestInterface<AnvilInputEvent> {
 
     //
 
-    public ChestInterfaceEventListener onSubmit(Consumer<AnvilInputSubmitEvent> callback) {
-        ChestInterfaceEventListener result = new ChestInterfaceEventListener() {
+    public InterfaceEventListener onSubmit(Consumer<AnvilInputSubmitEvent> callback) {
+        InterfaceEventListener result = new InterfaceEventListener() {
             @EventHandler(priority = EventHandlerPriority.LOWEST, ignoreCancelled = true)
             public void onSubmit(AnvilInputSubmitEvent event) {
                 callback.accept(event);
@@ -171,10 +127,19 @@ public class AnvilInput extends ChestInterface<AnvilInputEvent> {
 
     @Override
     public Inventory toBukkit() {
-        Inventory inventory = Bukkit.createInventory(new BukkitChestInterfaceIdentifier(this), InventoryType.ANVIL, this.config.title());
-        inventory.clear();
+        return this.toBukkit(null);
+    }
 
-        inventory.setItem(0, this.config.inputIcon().toBukkit());
+    private Inventory toBukkit(String inputText) {
+        Inventory inventory = Bukkit.createInventory(new ChestInterfaceBukkitIdentifier(this), InventoryType.ANVIL, this.config().name());
+
+        inventory.setItem(0, this.config().inputIcon().toBukkit());
+
+        if(inputText != null) {
+            ItemMeta meta = inventory.getItem(0).getItemMeta();
+            meta.setDisplayName("§r" + inputText);
+            inventory.getItem(0).setItemMeta(meta);
+        }
 
         return inventory;
     }

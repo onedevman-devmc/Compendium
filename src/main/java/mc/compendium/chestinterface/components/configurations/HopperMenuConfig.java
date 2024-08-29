@@ -1,9 +1,9 @@
 package mc.compendium.chestinterface.components.configurations;
 
-public class HopperMenuConfig extends ChestMenuConfig {
+public class HopperMenuConfig extends BasicMenuConfig {
 
-    public HopperMenuConfig(String title) {
-        super(title, 1, false);
+    public HopperMenuConfig(String name) {
+        super(name, false, 1);
     }
 
 }

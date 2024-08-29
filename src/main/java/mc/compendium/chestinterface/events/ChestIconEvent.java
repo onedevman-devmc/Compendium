@@ -8,27 +8,29 @@ import org.bukkit.event.inventory.InventoryEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
-public class ChestIconEvent extends ChestInterfaceEvent {
+public class ChestIconEvent<
+    BukkitEventType extends InventoryEvent
+> extends ChestInterfaceEvent<BukkitEventType> {
 
-    private final ChestIcon _icon;
-    private final ItemStack _item;
+    private final ChestIcon icon;
+    private final ItemStack item;
 
     //
 
-    public ChestIconEvent(Event bukkit_event, HumanEntity player, Inventory inventory, ChestInterface<?> chest_interface, ChestIcon icon, ItemStack item) {
-        super(bukkit_event, player, inventory, chest_interface);
+    public ChestIconEvent(BukkitEventType bukkitEvent, HumanEntity player, Inventory inventory, ChestInterface<?, ?> chestInterface, ChestIcon icon, ItemStack item) {
+        super(bukkitEvent, player, inventory, chestInterface);
 
-        this._icon = icon;
-        this._item = item;
+        this.icon = icon;
+        this.item = item;
     }
 
     //
 
-    public InventoryEvent bukkitEvent() { return (InventoryEvent) super.bukkitEvent(); }
+    public BukkitEventType bukkitEvent() { return super.bukkitEvent(); }
 
     //
 
-    public ChestIcon icon() { return this._icon; }
+    public ChestIcon icon() { return this.icon; }
 
-    public ItemStack item() { return this._item; }
+    public ItemStack item() { return this.item; }
 }

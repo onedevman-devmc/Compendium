@@ -1,10 +1,15 @@
 package mc.compendium.nms;
 
 import com.mojang.authlib.minecraft.MinecraftSessionService;
-import mc.compendium.utils.reflection.FieldsUtil;
-import mc.compendium.utils.reflection.MethodsUtil;
+import mc.compendium.reflection.FieldUtil;
+import mc.compendium.reflection.IncompatibleInheritanceException;
+import mc.compendium.reflection.MethodUtil;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.Services;
+import net.minecraft.server.dedicated.DedicatedPlayerList;
 import net.minecraft.server.dedicated.DedicatedServer;
 import net.minecraft.server.level.EntityPlayer;
+import net.minecraft.server.players.PlayerList;
 import org.bukkit.Bukkit;
 import org.bukkit.Server;
 import org.bukkit.entity.Player;
@@ -12,7 +17,6 @@ import org.bukkit.entity.Player;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
-import java.util.List;
 
 public class NMS {
 
@@ -21,62 +25,77 @@ public class NMS {
     }
 
     public static DedicatedServer getNativeServer(Server server) throws InvocationTargetException, IllegalAccessException {
-        return MethodsUtil.invoke(server, "getServer");
+        return (DedicatedServer) MethodUtil.getInstance().get(server, m -> m.getName().equals("getServer")).invoke(server);
     }
 
     public static class NativeServer {
 
-        public static net.minecraft.server.Services getServices() throws InvocationTargetException, IllegalAccessException {
+        public static DedicatedPlayerList getPlayerList() throws InvocationTargetException, IllegalAccessException, IncompatibleInheritanceException, NoSuchFieldException {
+            return (DedicatedPlayerList) getPlayerList(getNativeServer());
+        }
+
+        public static PlayerList getPlayerList(MinecraftServer nativeServer) throws IllegalAccessException, IncompatibleInheritanceException, NoSuchFieldException {
+            return FieldUtil.getInstance().getValue(MinecraftServer.class, nativeServer, field -> {
+                int modifiers = field.getModifiers();
+                return Modifier.isPrivate(modifiers) && !Modifier.isStatic(modifiers) && field.getType().equals(PlayerList.class);
+            });
+        }
+
+        public static void setPlayerList(PlayerList playerList) throws IllegalAccessException, IncompatibleInheritanceException, NoSuchFieldException, InvocationTargetException {
+            setPlayerList(getNativeServer(), playerList);
+        }
+
+        public static void setPlayerList(MinecraftServer nativeServer, PlayerList playerList) throws IllegalAccessException, IncompatibleInheritanceException, NoSuchFieldException {
+            FieldUtil.getInstance().setValue(MinecraftServer.class, nativeServer, field -> {
+                int modifiers = field.getModifiers();
+                return Modifier.isPrivate(modifiers) && !Modifier.isStatic(modifiers) && field.getType().equals(PlayerList.class);
+            }, playerList);
+        }
+
+        //
+
+        public static net.minecraft.server.Services getServices() throws InvocationTargetException, IllegalAccessException, NoSuchFieldException {
             return getServices(getNativeServer());
         }
 
-        public static net.minecraft.server.Services getServices(DedicatedServer nativeServer) throws IllegalAccessException {
-            List<Field> candidate_fields_services = FieldsUtil.filter(
-                    nativeServer.getClass().getSuperclass(),
-                    field -> {
-                        int modifiers = field.getModifiers();
-                        return Modifier.isProtected(modifiers) && Modifier.isFinal(modifiers) && field.getType().equals(net.minecraft.server.Services.class);
-                    },
-                    true
-            );
-            Field field_services = candidate_fields_services.size() == 1 ? candidate_fields_services.get(0) : null;
+        public static net.minecraft.server.Services getServices(MinecraftServer nativeServer) throws IllegalAccessException, NoSuchFieldException {
+            try {
+                return FieldUtil.getInstance().getValue(MinecraftServer.class, nativeServer, field -> field.getType().equals(net.minecraft.server.Services.class));
+            } catch (IncompatibleInheritanceException e) {
+                throw new RuntimeException(e);
+            }
+        }
 
-            if(field_services == null) throw new RuntimeException("Field `services` not found.");
-
-            field_services.setAccessible(true);
-            return (net.minecraft.server.Services) field_services.get(nativeServer);
+        public static void setServices(MinecraftServer nativeServer, net.minecraft.server.Services services) throws IllegalAccessException, NoSuchFieldException, ClassNotFoundException, InvocationTargetException, NoSuchMethodException {
+            try {
+                FieldUtil.getInstance().changeFinal(MinecraftServer.class, nativeServer, field -> field.getType().equals(net.minecraft.server.Services.class), services);
+            } catch (IncompatibleInheritanceException e) {
+                throw new RuntimeException(e);
+            }
         }
 
         public static class Services {
 
-            private static Field getSessionServiceField(net.minecraft.server.Services services) throws IllegalAccessException {
-                List<Field> candidate_fields_sessionService = FieldsUtil.filter(services, f -> f.getType().equals(MinecraftSessionService.class), true);
-                return candidate_fields_sessionService.size() == 1 ? candidate_fields_sessionService.get(0) : null;
+            private static boolean isSessionServiceField(Field field) {
+                return field.getType().equals(MinecraftSessionService.class);
             }
 
             //
 
-            public static MinecraftSessionService getSessionService() throws InvocationTargetException, IllegalAccessException {
+            public static MinecraftSessionService getSessionService() throws InvocationTargetException, IllegalAccessException, NoSuchFieldException, IncompatibleInheritanceException {
                 return getSessionService(getServices());
             }
 
-            public static MinecraftSessionService getSessionService(net.minecraft.server.Services services) throws IllegalAccessException {
-                Field field_sessionService = getSessionServiceField(services);
-                if(field_sessionService == null) throw new RuntimeException("Field `sessionService` not found.");
-
-                field_sessionService.setAccessible(true);
-                return (MinecraftSessionService) field_sessionService.get(services);
+            public static MinecraftSessionService getSessionService(net.minecraft.server.Services services) throws IllegalAccessException, IncompatibleInheritanceException, NoSuchFieldException {
+                return FieldUtil.getInstance().getValue(services, f -> f.getType().equals(MinecraftSessionService.class), true);
             }
 
-            public static void setSessionService(MinecraftSessionService sessionService) throws InvocationTargetException, IllegalAccessException, ClassNotFoundException, NoSuchMethodException, NoSuchFieldException {
+            public static void setSessionService(MinecraftSessionService sessionService) throws InvocationTargetException, IllegalAccessException, ClassNotFoundException, NoSuchMethodException, NoSuchFieldException, IncompatibleInheritanceException {
                 setSessionService(getServices(), sessionService);
             }
 
-            public static void setSessionService(net.minecraft.server.Services services, MinecraftSessionService sessionService) throws IllegalAccessException, ClassNotFoundException, InvocationTargetException, NoSuchMethodException {
-                Field field_sessionService = getSessionServiceField(services);
-                if(field_sessionService == null) throw new RuntimeException("Field `sessionService` not found.");
-
-                FieldsUtil.changeFinal(services, field_sessionService, sessionService);
+            public static void setSessionService(net.minecraft.server.Services services, MinecraftSessionService sessionService) throws IllegalAccessException, ClassNotFoundException, InvocationTargetException, NoSuchMethodException, NoSuchFieldException, IncompatibleInheritanceException {
+                FieldUtil.getInstance().changeFinal(services, Services::isSessionServiceField, sessionService);
             }
 
         }
@@ -86,7 +105,7 @@ public class NMS {
     //
 
     public static EntityPlayer getNativePlayer(Player player) throws InvocationTargetException, IllegalAccessException {
-        return MethodsUtil.invoke(player, "getHandle");
+        return (EntityPlayer) MethodUtil.getInstance().get(player, m -> m.getName().equals("getHandle")).invoke(player);
     }
 
 }

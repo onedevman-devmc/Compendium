@@ -8,8 +8,8 @@ import org.bukkit.inventory.Inventory;
 
 public class AnvilInputOpenEvent extends AnvilInputEvent {
 
-    public AnvilInputOpenEvent(Event bukkit_event, HumanEntity entity, Inventory inventory, AnvilInput anvil_input) {
-        super(bukkit_event, entity, inventory, anvil_input);
+    public AnvilInputOpenEvent(Event bukkitEvent, HumanEntity entity, Inventory inventory, AnvilInput anvilInput) {
+        super(bukkitEvent, entity, inventory, anvilInput);
     }
 
     //

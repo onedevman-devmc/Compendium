@@ -6,7 +6,7 @@ import java.util.function.Consumer;
 
 public class PluginLogger {
 
-    private String _prefix;
+    private String prefix;
 
     //
 
@@ -20,8 +20,8 @@ public class PluginLogger {
 
     //
 
-    public String getPrefix() { return this._prefix; }
-    public void setPrefix(String prefix) { this._prefix = AnsiColor.parse(prefix + "§r"); }
+    public String getPrefix() { return this.prefix; }
+    public void setPrefix(String prefix) { this.prefix = AnsiColor.parse(prefix + "§r"); }
 
     //
 

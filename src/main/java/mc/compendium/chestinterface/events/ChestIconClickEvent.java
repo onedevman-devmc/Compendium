@@ -6,21 +6,22 @@ import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.Event;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
-public class ChestIconClickEvent extends ChestIconEvent {
+public class ChestIconClickEvent extends ChestIconEvent<InventoryClickEvent> {
 
-    private final int _slot;
-    private final ClickType _mouse_click;
+    private final int slot;
+    private final ClickType mouseClick;
 
     //
 
-    public ChestIconClickEvent(Event bukkit_event, HumanEntity entity, Inventory inventory, ChestInterface<?> chest_interface, ChestIcon icon, ItemStack item, int slot, ClickType mouse_click) {
-        super(bukkit_event, entity, inventory, chest_interface, icon, item);
+    public ChestIconClickEvent(InventoryClickEvent bukkitEvent, HumanEntity entity, Inventory inventory, ChestInterface<?, ?> chestInterface, ChestIcon icon, ItemStack item, int slot, ClickType mouseClick) {
+        super(bukkitEvent, entity, inventory, chestInterface, icon, item);
 
-        this._mouse_click = mouse_click;
-        this._slot = slot;
+        this.mouseClick = mouseClick;
+        this.slot = slot;
     }
 
     //
@@ -29,8 +30,8 @@ public class ChestIconClickEvent extends ChestIconEvent {
 
     //
 
-    public ClickType mouseClick() { return this._mouse_click; }
+    public ClickType mouseClick() { return this.mouseClick; }
 
-    public int slot() { return this._slot; }
+    public int slot() { return this.slot; }
 
 }

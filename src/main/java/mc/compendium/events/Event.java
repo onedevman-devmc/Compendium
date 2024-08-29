@@ -1,18 +1,21 @@
 package mc.compendium.events;
 
+import java.lang.reflect.Type;
+
 public abstract class Event {
 
     private final boolean cancellable;
+    private final Class<?> rawType = null;
 
     private boolean cancelled = false;
 
     //
 
-    public Event() {
+    protected Event() {
         this(false);
     }
 
-    public Event(boolean cancellable) {
+    protected Event(boolean cancellable) {
         this.cancellable = cancellable;
     }
 
@@ -23,5 +26,11 @@ public abstract class Event {
     public boolean cancelled() { return this.cancelled; }
 
     public void setCancelled(boolean cancel) { this.cancelled = cancel; }
+
+    //
+
+    public boolean isCompatible(Type eventType) {
+        return this.getClass().equals(eventType);
+    }
 
 }

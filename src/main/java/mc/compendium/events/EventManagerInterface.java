@@ -17,8 +17,8 @@ public interface EventManagerInterface<
 
     //
 
-    boolean call(EventType event);
+    boolean handle(EventType event);
 
-    <E> boolean call(E event);
+    <E> boolean handle(E event);
 
 }

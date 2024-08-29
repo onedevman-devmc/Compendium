@@ -2,7 +2,7 @@ package mc.compendium.chestinterface.components.configurations;
 
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
-import mc.compendium.utils.reflection.MethodsUtil;
+import mc.compendium.reflection.MethodUtil;
 import org.bukkit.Material;
 import org.bukkit.inventory.meta.SkullMeta;
 
@@ -13,37 +13,37 @@ import java.util.UUID;
 
 public class TexturedChestIconConfig extends ChestIconConfig {
 
-    private String texture_url;
+    private String textureUrl;
 
     //
 
-    public TexturedChestIconConfig(String texture_url, String name, int amount, List<String> description, boolean enchanted) {
+    public TexturedChestIconConfig(String textureUrl, String name, int amount, List<String> description, boolean enchanted) {
         super(Material.PLAYER_HEAD, name, amount, description, enchanted);
 
-        this.setTextureUrl(texture_url);
+        this.setTextureUrl(textureUrl);
     }
 
     //
 
-    public String textureUrl() { return this.texture_url; }
+    public String textureUrl() { return this.textureUrl; }
 
-    public String setTextureUrl(String texture_url) { return this.texture_url = texture_url; }
+    public String setTextureUrl(String textureUrl) { return this.textureUrl = textureUrl; }
 
     //
 
     public void applyTexture(SkullMeta meta) throws InvocationTargetException, IllegalAccessException {
-        GameProfile texture_profile = new GameProfile(UUID.randomUUID(), "null");
+        GameProfile textureProfile = new GameProfile(UUID.randomUUID(), "null");
 
-        String final_texture_property_data = "{\"textures\":{\"SKIN\":{\"url\":\"" + this.textureUrl() + "\"}}}";
+        String finalTexturePropertyData = "{\"textures\":{\"SKIN\":{\"url\":\"" + this.textureUrl() + "\"}}}";
 
-        Property textures_property = new Property(
+        Property texturesProperty = new Property(
             "textures",
-            new String(Base64.getEncoder().encode(final_texture_property_data.getBytes()))
+            new String(Base64.getEncoder().encode(finalTexturePropertyData.getBytes()))
         );
 
-        texture_profile.getProperties().put("textures", textures_property);
+        textureProfile.getProperties().put("textures", texturesProperty);
 
-        MethodsUtil.invoke(meta, "setProfile", texture_profile);
+        MethodUtil.getInstance().get(meta, (m) -> m.getName().equals("setProfile")).invoke(meta, textureProfile);
     }
 
 }

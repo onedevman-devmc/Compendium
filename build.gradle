@@ -50,6 +50,8 @@ repositories {
 dependencies {
     compileOnly "org.spigotmc:spigot:${project.ext.nmsVersion}-R0.1-SNAPSHOT:remapped-mojang"
     compileOnly "org.spigotmc:minecraft-server:${project.ext.nmsVersion}-R0.1-SNAPSHOT"
+
+//    implementation 'net.bytebuddy:byte-buddy-dep:1.15.0'
 }
 
 //
@@ -74,7 +76,7 @@ shadowJar {
 
     //
 
-
+    relocate 'net.bytebuddy', 'mc.compendium.bytebuddy'
 }
 
 spigotRemap {

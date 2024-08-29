@@ -14,9 +14,9 @@ public class AliasCache<Key, AliasKey, Value> implements CacheInterface<Key, Val
         this.aliasformatter = aliasformatter;
     }
 
-    public AliasCache(Formatter<Key, AliasKey> aliasformatter, CachePersistency persistency) {
+    public AliasCache(Formatter<Key, AliasKey> aliasformatter, CachePersistence persistence) {
         this(aliasformatter);
-        cache.persistency(persistency);
+        cache.persistence(persistence);
     }
 
     public AliasCache(Formatter<Key, AliasKey> aliasformatter, long delay) {
@@ -37,13 +37,13 @@ public class AliasCache<Key, AliasKey, Value> implements CacheInterface<Key, Val
     }
 
     @Override
-    public void store(Key key, Value value, CacheDataPersistency persistency) {
-        this.cache.store(aliasformatter.format(key), value, persistency);
+    public void store(Key key, Value value, CacheDataPersistence persistence) {
+        this.cache.store(aliasformatter.format(key), value, persistence);
     }
 
     @Override
-    public void store(Key key, Value value, CacheDataPersistency persistency, long delay) {
-        this.cache.store(aliasformatter.format(key), value, persistency, delay);
+    public void store(Key key, Value value, CacheDataPersistence persistence, long delay) {
+        this.cache.store(aliasformatter.format(key), value, persistence, delay);
     }
 
     @Override
@@ -67,18 +67,18 @@ public class AliasCache<Key, AliasKey, Value> implements CacheInterface<Key, Val
     }
 
     @Override
-    public CachePersistency persistency() {
-        return this.cache.persistency();
+    public CachePersistence persistence() {
+        return this.cache.persistence();
     }
 
     @Override
-    public CachePersistency persistency(CachePersistency persistency) {
-        return this.cache.persistency(persistency);
+    public CachePersistence persistence(CachePersistence persistence) {
+        return this.cache.persistence(persistence);
     }
 
     @Override
-    public CacheDataPersistency persistencyOf(Key key) {
-        return this.cache.persistencyOf(aliasformatter.format(key));
+    public CacheDataPersistence persistenceOf(Key key) {
+        return this.cache.persistenceOf(aliasformatter.format(key));
     }
 
     @Override

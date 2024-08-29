@@ -24,14 +24,14 @@ public class ArchiveFile {
 
     //
 
-    private Archive _archive;
+    private final Archive archive;
 
-    private ZipEntry _zip_entry;
-    private String _path;
+    private ZipEntry zipEntry;
+    private String path;
 
-    private boolean _is_dir = false;
+    private boolean isDir = false;
 
-    private boolean _locked = false;
+    private boolean locked = false;
 
     //
 
@@ -44,32 +44,32 @@ public class ArchiveFile {
     }
 
     public ArchiveFile(Archive archive, ZipEntry entry, String filepath, boolean isDirectory) throws ArchiveFileException {
-        this._archive = archive;
+        this.archive = archive;
 
         this.zipEntry(entry);
         this.path(filepath);
 
-        this._is_dir = isDirectory;
+        this.isDir = isDirectory;
     }
 
     //
 
-    public Archive archive() { return this._archive; }
+    public Archive archive() { return this.archive; }
 
-    public ZipEntry zipEntry() { return this._zip_entry; }
+    public ZipEntry zipEntry() { return this.zipEntry; }
     public ZipEntry zipEntry(ZipEntry entry) throws ArchiveFileException {
         if(this.locked())
             throw new ArchiveFileException((this.isDir() ? "Directory" : "File")+" locked.");
 
-        return this._zip_entry = entry;
+        return this.zipEntry = entry;
     }
 
-    public String path() { return this._path; }
+    public String path() { return this.path; }
     public String path(String path) throws ArchiveFileException {
         if(this.locked())
             throw new ArchiveFileException((this.isDir() ? "Directory" : "File")+" locked.");
 
-        return this._path = path;
+        return this.path = path;
     }
 
     public String name() {
@@ -78,7 +78,7 @@ public class ArchiveFile {
 
     //
 
-    public boolean isDir() { return this._is_dir; }
+    public boolean isDir() { return this.isDir; }
 
     public ArchiveDirectory asDir() { return this.isDir() ? (ArchiveDirectory) this : null; }
 
@@ -93,22 +93,22 @@ public class ArchiveFile {
 
     //
 
-    public void extract(String extraction_filepath) throws IOException {
-        String[] extracted_filepath_fragments = extraction_filepath.split(PATH_SEPARATOR);
+    public void extract(String extractionFilepath) throws IOException {
+        String[] extractedFilepathFragments = extractionFilepath.split(PATH_SEPARATOR);
         this.extract(
-            extracted_filepath_fragments[extracted_filepath_fragments.length-1],
-            Arrays.join(extracted_filepath_fragments, PATH_SEPARATOR, 0, extracted_filepath_fragments.length - 1)
+            extractedFilepathFragments[extractedFilepathFragments.length-1],
+            Arrays.join(extractedFilepathFragments, PATH_SEPARATOR, 0, extractedFilepathFragments.length - 1)
         );
     }
 
-    public void extract(String extraction_filename, String extraction_directorypath) throws IOException {
-        Path extraction_directorypath_path = Path.of(extraction_directorypath);
-        if(!Files.exists(extraction_directorypath_path))
-            Files.createDirectories(extraction_directorypath_path);
+    public void extract(String extractionFilename, String extractionDirectorypath) throws IOException {
+        Path extractionDirectorypathPath = Path.of(extractionDirectorypath);
+        if(!Files.exists(extractionDirectorypathPath))
+            Files.createDirectories(extractionDirectorypathPath);
 
         FileOutputStream output = null;
         try {
-            output = new FileOutputStream(Paths.get(extraction_directorypath, extraction_filename).toString());
+            output = new FileOutputStream(Paths.get(extractionDirectorypath, extractionFilename).toString());
             InputStream content = this.content();
 
             byte[] buf = new byte[1024];
@@ -126,9 +126,9 @@ public class ArchiveFile {
 
     //
 
-    public boolean locked() { return this._locked; }
+    public boolean locked() { return this.locked; }
 
-    public void lock(boolean state) { this._locked = state; }
+    public void lock(boolean state) { this.locked = state; }
 
     //
 

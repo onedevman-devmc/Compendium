@@ -4,20 +4,21 @@ import org.bukkit.Material;
 
 import java.util.List;
 
-public class ChestIconConfig {
+public class ChestIconConfig extends BasicInterfaceConfig {
 
     private Material material;
-    private String name;
-    private int amount;
+    private int count;
     private List<String> description;
     private boolean enchanted;
 
     //
 
-    public ChestIconConfig(Material material, String name, int amount, List<String> description, boolean enchanted) {
+    public ChestIconConfig(Material material, String name, int count, List<String> description, boolean enchanted) {
+        super(name, false);
+
         this.setMaterial(material);
         this.setName(name);
-        this.setAmount(amount);
+        this.setCount(count);
         this.setDescription(description);
         this.setEnchanted(enchanted);
     }
@@ -26,9 +27,7 @@ public class ChestIconConfig {
 
     public Material material() { return this.material; }
 
-    public String name() { return this.name; }
-
-    public int amount() { return this.amount; }
+    public int count() { return this.count; }
 
     public List<String> description() { return this.description; }
 
@@ -38,9 +37,7 @@ public class ChestIconConfig {
 
     public Material setMaterial(Material material) { return this.material = material; }
 
-    public String setName(String name) { return this.name = name; }
-
-    public int setAmount(int amount) { return this.amount = amount; }
+    public int setCount(int count) { return this.count = count; }
 
     public List<String> setDescription(List<String> description) { return this.description = description; }
 

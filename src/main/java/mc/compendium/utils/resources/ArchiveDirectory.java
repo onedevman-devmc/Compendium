@@ -15,16 +15,12 @@ import java.util.zip.ZipEntry;
 public class ArchiveDirectory extends ArchiveFile {
 
     private static int indexOfFile(List<ArchiveFile> files, String filename) {
-        int file_count = files.size();
+        int fileCount = files.size();
         boolean found = false;
 
         int i;
-        for(i = 0; i < file_count && !(found = files.get(i).name().equals(filename)); ++i);
-
-        if(found)
-            return i;
-
-        return -1;
+        for(i = 0; i < fileCount && !(found = files.get(i).name().equals(filename)); ++i);
+        return found ? i : -1;
     }
 
     public static String toString(ArchiveDirectory directory) {
@@ -32,8 +28,8 @@ public class ArchiveDirectory extends ArchiveFile {
 
         ArchiveFile file;
 
-        int file_count = directory.count();
-        for(int i = 0; i < file_count; ++i) {
+        int fileCount = directory.count();
+        for(int i = 0; i < fileCount; ++i) {
             file = directory.get(i);
             result.append("    ").append((file.isDir() ? file.asDir() : file).toString().replaceAll("\n", "\n    ")).append("\n");
         }
@@ -45,7 +41,7 @@ public class ArchiveDirectory extends ArchiveFile {
 
     //
 
-    private List<ArchiveFile> _files = new ArrayList<>();
+    private List<ArchiveFile> files = new ArrayList<>();
 
     //
 
@@ -60,13 +56,11 @@ public class ArchiveDirectory extends ArchiveFile {
     //
 
     public List<ArchiveFile> files() {
-        return this._files;
+        return this.files;
     }
 
     public void add(ArchiveFile file) throws ArchiveFileException {
-        if(this.locked())
-            throw new ArchiveFileException("Directory locked.");
-
+        if(this.locked()) throw new ArchiveFileException("Directory locked.");
         this.files().add(file);
     }
 
@@ -89,21 +83,18 @@ public class ArchiveDirectory extends ArchiveFile {
         if(filepath.endsWith(ArchiveFile.PATH_SEPARATOR))
             filepath = filepath.substring(0, filepath.length()-ArchiveFile.PATH_SEPARATOR.length());
 
-        String[] path_fragments = filepath.split(ArchiveFile.PATH_SEPARATOR);
-        int file_index = indexOfFile(this.files(), path_fragments[0]);
+        String[] pathFragments = filepath.split(ArchiveFile.PATH_SEPARATOR);
+        int fileIndex = indexOfFile(this.files(), pathFragments[0]);
 
         ArchiveFile file;
 
-        if(file_index > -1) {
-            file = this.get(file_index);
+        if(fileIndex > -1) {
+            file = this.get(fileIndex);
 
-            if(path_fragments.length == 1)
-                return file;
+            if(pathFragments.length == 1) return file;
+            if(!file.isDir()) return null;
 
-            if(!file.isDir())
-                return null;
-
-            return file.asDir().get(Arrays.join(path_fragments, ArchiveFile.PATH_SEPARATOR, 1));
+            return file.asDir().get(Arrays.join(pathFragments, ArchiveFile.PATH_SEPARATOR, 1));
         }
 
         return null;
@@ -119,8 +110,7 @@ public class ArchiveDirectory extends ArchiveFile {
     }
 
     public ArchiveFile remove(String filepath) throws ArchiveFileException {
-        if(this.locked())
-            throw new ArchiveFileException("Directory locked.");
+        if(this.locked()) throw new ArchiveFileException("Directory locked.");
 
         if(filepath.startsWith(ArchiveFile.PATH_SEPARATOR))
             filepath = filepath.substring(ArchiveFile.PATH_SEPARATOR.length());
@@ -128,9 +118,8 @@ public class ArchiveDirectory extends ArchiveFile {
         if(filepath.endsWith(ArchiveFile.PATH_SEPARATOR))
             filepath = filepath.substring(0, filepath.length()-ArchiveFile.PATH_SEPARATOR.length());
 
-        int file_index = indexOfFile(this.files(), filepath);
-        if(file_index > 0)
-            return this.remove(file_index);
+        int fileIndex = indexOfFile(this.files(), filepath);
+        if(fileIndex > 0) return this.remove(fileIndex);
 
         return null;
     }
@@ -143,26 +132,26 @@ public class ArchiveDirectory extends ArchiveFile {
 
     //
 
-    public void extract(String extraction_filepath) throws IOException {
-        String[] extracted_filepath_fragments = extraction_filepath.split(PATH_SEPARATOR);
+    public void extract(String extractionFilepath) throws IOException {
+        String[] extractedFilepathFragments = extractionFilepath.split(PATH_SEPARATOR);
         this.extract(
-            extracted_filepath_fragments[extracted_filepath_fragments.length-1],
-            Arrays.join(extracted_filepath_fragments, PATH_SEPARATOR, 0, extracted_filepath_fragments.length - 1)
+            extractedFilepathFragments[extractedFilepathFragments.length-1],
+            Arrays.join(extractedFilepathFragments, PATH_SEPARATOR, 0, extractedFilepathFragments.length - 1)
         );
     }
 
     @Override
-    public void extract(String extraction_filename, String extraction_directorypath) throws IOException {
-        Path extraction_filepath_path = Paths.get(extraction_directorypath, extraction_filename);
-        if(!Files.exists(extraction_filepath_path))
-            Files.createDirectories(extraction_filepath_path);
+    public void extract(String extractionFilename, String extractionDirectorypath) throws IOException {
+        Path extractionFilepathPath = Paths.get(extractionDirectorypath, extractionFilename);
+        if(!Files.exists(extractionFilepathPath))
+            Files.createDirectories(extractionFilepathPath);
 
-        int file_count = this.count();
+        int fileCount = this.count();
 
         ArchiveFile file;
-        for(int i = 0; i < file_count; ++i) {
+        for(int i = 0; i < fileCount; ++i) {
             file = this.get(i);
-            file.extract(file.name(), extraction_filepath_path.toString());
+            file.extract(file.name(), extractionFilepathPath.toString());
         }
     }
 
@@ -171,13 +160,12 @@ public class ArchiveDirectory extends ArchiveFile {
     public void lock(boolean state, boolean recursively) {
         super.lock(state);
 
-        boolean is_files_list_modifiable = Lists.isModifiable(this.files());
-        if(this.locked())
-            if(is_files_list_modifiable)
-                this._files = Collections.unmodifiableList(this.files());
-        else
-            if(!is_files_list_modifiable)
-                this._files = new ArrayList<>(this.files());
+        boolean isFilesListModifiable = Lists.isModifiable(this.files());
+        if(this.locked()) {
+            if (isFilesListModifiable)
+                this.files = Collections.unmodifiableList(this.files());
+        }
+        else this.files = new ArrayList<>(this.files());
 
         if(recursively) {
             this.files().forEach(file -> {

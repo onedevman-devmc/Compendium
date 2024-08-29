@@ -5,20 +5,22 @@ import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.Event;
 import org.bukkit.inventory.Inventory;
 
-public class AnvilInputEvent extends ChestInterfaceEvent {
+public class AnvilInputEvent<
+    BukkitEventType extends org.bukkit.event.Event
+> extends ChestInterfaceEvent<BukkitEventType> {
 
-    private final AnvilInput _anvil_input;
+    private final AnvilInput anvilInput;
 
     //
 
-    public AnvilInputEvent(Event bukkit_event, HumanEntity entity, Inventory inventory, AnvilInput anvil_input) {
-        super(bukkit_event, entity, inventory, anvil_input);
+    public AnvilInputEvent(BukkitEventType bukkitEvent, HumanEntity entity, Inventory inventory, AnvilInput anvilInput) {
+        super(bukkitEvent, entity, inventory, anvilInput);
 
-        this._anvil_input = anvil_input;
+        this.anvilInput = anvilInput;
     }
 
     //
 
-    public AnvilInput anvilInput() { return this._anvil_input; }
+    public AnvilInput anvilInput() { return this.anvilInput; }
 
 }

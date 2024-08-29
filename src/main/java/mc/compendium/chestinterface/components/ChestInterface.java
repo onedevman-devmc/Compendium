@@ -1,32 +1,29 @@
 package mc.compendium.chestinterface.components;
 
-import mc.compendium.chestinterface.bukkit.BukkitChestInterfaceIdentifier;
+import mc.compendium.chestinterface.bukkit.ChestInterfaceBukkitIdentifier;
+import mc.compendium.chestinterface.components.configurations.InterfaceConfig;
 import mc.compendium.chestinterface.events.ChestInterfaceEvent;
-import mc.compendium.chestinterface.events.ChestInterfaceEventManager;
-import org.bukkit.Sound;
-import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 
-public abstract class ChestInterface<EventType extends ChestInterfaceEvent> extends ChestInterfaceEventManager<EventType> {
+public abstract class ChestInterface<
+    ConfigType  extends InterfaceConfig,
+    EventType extends ChestInterfaceEvent<?>
+> extends ConfigurableInterface<ConfigType, Inventory, Inventory, EventType> {
 
-    public static ChestInterface<? extends ChestInterfaceEvent> getAssociated(Inventory inventory) {
-        InventoryHolder inventory_holder = inventory.getHolder();
+    public static ChestInterface<?, ? extends ChestInterfaceEvent> getAssociated(Inventory inventory) {
+        InventoryHolder inventoryHolder = inventory.getHolder();
 
-        if(inventory_holder == null || !(inventory_holder instanceof BukkitChestInterfaceIdentifier chest_interface_identifier))
+        if(inventoryHolder == null || !(inventoryHolder instanceof ChestInterfaceBukkitIdentifier chestInterfaceIdentifier))
             return null;
 
-        return chest_interface_identifier.chestInterface();
+        return chestInterfaceIdentifier.chestInterface();
     }
 
     //
 
-    public static void playInteractionSound(Player player) {
-        player.playSound(player.getLocation(), Sound.BLOCK_DISPENSER_DISPENSE, 1, 1);
+    protected ChestInterface(ConfigType config, Class<EventType> eventType) {
+        super(config, eventType);
     }
-
-    //
-
-    public abstract Inventory toBukkit();
 
 }

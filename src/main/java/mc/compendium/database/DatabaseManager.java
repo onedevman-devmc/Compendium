@@ -46,8 +46,8 @@ public class DatabaseManager {
 
         //
 
-        private Result(Integer rows, ResultSet result_set, ConnectionCloser closer) {
-            trio = Trio.of(rows, result_set, closer);
+        private Result(Integer rows, ResultSet resultSet, ConnectionCloser closer) {
+            trio = Trio.of(rows, resultSet, closer);
         }
 
         //
@@ -60,8 +60,8 @@ public class DatabaseManager {
 
         //
 
-        public static Result of(Integer rows, ResultSet result_set, ConnectionCloser closer) {
-            return new Result(rows, result_set, closer);
+        public static Result of(Integer rows, ResultSet resultSet, ConnectionCloser closer) {
+            return new Result(rows, resultSet, closer);
         }
 
     }
@@ -80,43 +80,43 @@ public class DatabaseManager {
 
     public final System dbtype;
 
-    private final String _hostname;
-    private final int _port;
+    private final String hostname;
+    private final int port;
 
-    private final String _username;
-    private final String _password;
+    private final String username;
+    private final String password;
 
-    private final String _dbname;
+    private final String dbname;
 
-    private final Path _dbpath;
+    private final Path dbpath;
 
     //
 
     private DatabaseManager(System dbtype, String hostname, int port, String dbname, String username, String password, Path dbpath) {
         this.dbtype = dbtype;
 
-        this._hostname = hostname;
-        this._port = port;
-        this._dbname = dbname;
-        this._username = username;
-        this._password = password;
+        this.hostname = hostname;
+        this.port = port;
+        this.dbname = dbname;
+        this.username = username;
+        this.password = password;
 
-        this._dbpath = dbpath;
+        this.dbpath = dbpath;
     }
 
     //
 
-    public String hostname() { return this._hostname; }
+    public String hostname() { return this.hostname; }
 
-    public int port() { return this._port; }
+    public int port() { return this.port; }
 
-    public String username() { return this._username; }
+    public String username() { return this.username; }
 
-    public String password() { return this._password; }
+    public String password() { return this.password; }
 
-    public String dbname() {return this._dbname; }
+    public String dbname() {return this.dbname; }
 
-    public Path dbpath() { return this._dbpath; }
+    public Path dbpath() { return this.dbpath; }
 
     //
 
@@ -133,16 +133,16 @@ public class DatabaseManager {
 
     //
 
-    public synchronized Result execute(RequestType request_type, String request) throws SQLException {
+    public synchronized Result execute(RequestType requestType, String request) throws SQLException {
         Connection connection = this.connect();
         Statement statement = connection.createStatement();
 
         int rows = -1;
         ResultSet result = null;
         try {
-            if (request_type.equals(RequestType.UPDATE))
+            if (requestType.equals(RequestType.UPDATE))
                 rows = statement.executeUpdate(request);
-            else if (request_type.equals(RequestType.QUERY))
+            else if (requestType.equals(RequestType.QUERY))
                 result = statement.executeQuery(request);
         } catch(SQLException e) {
             e.printStackTrace();
@@ -231,16 +231,16 @@ public class DatabaseManager {
     public synchronized boolean columnExists(String table, String column) throws SQLException {
         List<Trio<String, String, Integer>> columns = this.columns(table);
 
-        boolean column_found = false;
+        boolean columnFound = false;
 
         int i = 0;
-        while(i < columns.size() && !column_found) {
-            Trio<String, String, Integer> column_i = columns.get(i);
-            column_found = column_i.one().equalsIgnoreCase(column);
+        while(i < columns.size() && !columnFound) {
+            Trio<String, String, Integer> columnIndex = columns.get(i);
+            columnFound = columnIndex.one().equalsIgnoreCase(column);
             ++i;
         }
 
-        return column_found;
+        return columnFound;
     }
 
     //

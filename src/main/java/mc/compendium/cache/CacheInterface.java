@@ -6,9 +6,9 @@ public interface CacheInterface<Key, Value> {
 
     void store(Key key, Value value);
 
-    void store(Key key, Value value, CacheDataPersistency persistency);
+    void store(Key key, Value value, CacheDataPersistence persistence);
 
-    void store(Key key, Value value, CacheDataPersistency persistency, long delay);
+    void store(Key key, Value value, CacheDataPersistence persistence, long delay);
 
     Value get(Key key);
 
@@ -17,12 +17,12 @@ public interface CacheInterface<Key, Value> {
     long delay();
     long delay(long ms);
 
-    CachePersistency persistency();
-    CachePersistency persistency(CachePersistency persistent);
+    CachePersistence persistence();
+    CachePersistence persistence(CachePersistence persistent);
 
     //
 
-    CacheDataPersistency persistencyOf(Key key);
+    CacheDataPersistence persistenceOf(Key key);
 
     long delayOf(Key key);
 

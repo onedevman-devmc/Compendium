@@ -1,21 +1,14 @@
 package mc.compendium.events;
 
 public enum EventHandlerPriority {
-
-    LOWEST(0),
-    LOW(1),
-    NORMAL(2),
-    HIGH(3),
-    HIGHEST(4);
-
-    //
-
-    public final int priority;
+    LOWEST,
+    LOW,
+    NORMAL,
+    HIGH,
+    HIGHEST;
 
     //
 
-    EventHandlerPriority(int priority) {
-        this.priority = priority;
-    }
+    public static final EventHandlerPriority[] DECREASING_ORDER = { HIGHEST, HIGH, NORMAL, LOW, LOWEST };
 
 }
