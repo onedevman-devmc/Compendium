@@ -24,7 +24,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
-public class AnvilInput extends ChestInterface<AnvilInputConfig, AnvilInputEvent<?>> implements ProtocolEventListener {
+public class AnvilInput extends ChestInterface<AnvilInputConfig, AnvilInputEvent<?>> implements InterfaceEventListener, ProtocolEventListener {
 
     public static final int DEFAULT_ANVIL_FIRST_INPUT_SLOT = 0;
     public static final int DEFAULT_ANVIL_SECOND_INPUT_SLOT = 1;
@@ -48,6 +48,46 @@ public class AnvilInput extends ChestInterface<AnvilInputConfig, AnvilInputEvent
 
     //
 
+    @EventHandler(priority = EventHandlerPriority.HIGHEST)
+    public void onOpen(AnvilInputOpenEvent event) {
+        this.processingInputPlayers.put(event.entity().getUniqueId().toString(), Pair.of(event.inventory(), ""));
+    }
+
+    @EventHandler(priority = EventHandlerPriority.LOWEST)
+    public void onClose(AnvilInputCloseEvent event) {
+        if(event.entity() instanceof Player && !this.config().silent())
+            playInteractionSound((Player) event.entity());
+
+        this.processingInputPlayers.remove(event.entity().getUniqueId().toString());
+    }
+
+    @EventHandler(priority = EventHandlerPriority.HIGHEST, ignoreCancelled = true)
+    public void onClick(AnvilInputClickEvent event) {
+        if(event.entity() instanceof Player player) {
+            player.setExp(player.getExp());
+
+            if(event.slot() != AnvilInput.DEFAULT_ANVIL_OUTPUT_SLOT) return;
+
+            if(!this.config().silent())
+                playInteractionSound(player);
+
+            Pair<Inventory, String> pair = this.processingInputPlayers.get(event.entity().getUniqueId().toString());
+            String inputText = pair.last();
+
+            AnvilInputSubmitEvent inputEvent = new AnvilInputSubmitEvent(null, event.entity(), event.inventory(), this, inputText);
+            boolean accepted = this.handle(inputEvent);
+
+            player.closeInventory();
+
+            if(!accepted) {
+                event.setCancelled(true);
+                player.openInventory(this.toBukkit(inputText));
+            }
+        }
+    }
+
+    //
+
     private final Map<String, Pair<Inventory, String>> processingInputPlayers = new HashMap<>();
 
     //
@@ -65,47 +105,7 @@ public class AnvilInput extends ChestInterface<AnvilInputConfig, AnvilInputEvent
         protocolManager.enable();
         protocolManager.addListener(this);
 
-        AnvilInput _this = this;
-
-        this.addListener(new InterfaceEventListener() {
-            @EventHandler(priority = EventHandlerPriority.HIGHEST)
-            public void onOpen(AnvilInputOpenEvent event) {
-                _this.processingInputPlayers.put(event.entity().getUniqueId().toString(), Pair.of(event.inventory(), ""));
-            }
-
-            @EventHandler(priority = EventHandlerPriority.LOWEST)
-            public void onClose(AnvilInputCloseEvent event) {
-                if(event.entity() instanceof Player && !_this.config().silent())
-                    playInteractionSound((Player) event.entity());
-
-                _this.processingInputPlayers.remove(event.entity().getUniqueId().toString());
-            }
-
-            @EventHandler(priority = EventHandlerPriority.HIGHEST, ignoreCancelled = true)
-            public void onClick(AnvilInputClickEvent event) {
-                if(event.entity() instanceof Player player) {
-                    player.setExp(player.getExp());
-
-                    if(event.slot() != AnvilInput.DEFAULT_ANVIL_OUTPUT_SLOT) return;
-
-                    if(!_this.config().silent())
-                        playInteractionSound(player);
-
-                    Pair<Inventory, String> pair = _this.processingInputPlayers.get(event.entity().getUniqueId().toString());
-                    String inputText = pair.last();
-
-                    AnvilInputSubmitEvent inputEvent = new AnvilInputSubmitEvent(null, event.entity(), event.inventory(), _this, inputText);
-                    boolean accepted = _this.handle(inputEvent);
-
-                    player.closeInventory();
-
-                    if(!accepted) {
-                        event.setCancelled(true);
-                        player.openInventory(_this.toBukkit(inputText));
-                    }
-                }
-            }
-        });
+        this.addListener(this);
     }
 
     //

@@ -1,10 +1,10 @@
 package mc.compendium.chestinterface.components;
 
 import mc.compendium.chestinterface.components.configurations.MenuConfig;
-import mc.compendium.chestinterface.events.MenuClickEvent;
-import mc.compendium.chestinterface.events.MenuCloseEvent;
 import mc.compendium.chestinterface.events.BasicMenuEvent;
 import mc.compendium.chestinterface.events.InterfaceEventListener;
+import mc.compendium.chestinterface.events.MenuClickEvent;
+import mc.compendium.chestinterface.events.MenuCloseEvent;
 import mc.compendium.events.EventHandler;
 import mc.compendium.events.EventHandlerPriority;
 import org.bukkit.entity.Player;
@@ -17,7 +17,21 @@ import java.util.Map;
 public abstract class BasicMenu<
     ConfigType extends MenuConfig,
     EventType extends BasicMenuEvent<?>
-> extends ChestInterface<ConfigType, EventType> {
+> extends ChestInterface<ConfigType, EventType> implements InterfaceEventListener {
+
+    @EventHandler(priority = EventHandlerPriority.HIGHEST)
+    public void onClose(MenuCloseEvent event) {
+        if(event.entity() instanceof Player && !this.config().silent())
+            ChestInterface.playInteractionSound((Player) event.entity());
+    }
+
+    @EventHandler(priority = EventHandlerPriority.HIGHEST)
+    public void onClick(MenuClickEvent event) {
+        if(event.entity() instanceof Player && !this.config().silent() && this.getIcon(event.slot()) != null)
+            ChestInterface.playInteractionSound((Player) event.entity());
+    }
+
+    //
 
     private final Map<Integer, ChestIcon> icons = new HashMap<>();
 
@@ -28,21 +42,7 @@ public abstract class BasicMenu<
 
         //
 
-        BasicMenu<ConfigType, EventType> _this = this;
-
-        this.addListener(new InterfaceEventListener() {
-            @EventHandler(priority = EventHandlerPriority.HIGHEST)
-            public void onClose(MenuCloseEvent event) {
-                if(event.entity() instanceof Player && !_this.config().silent())
-                    ChestInterface.playInteractionSound((Player) event.entity());
-            }
-
-            @EventHandler(priority = EventHandlerPriority.HIGHEST)
-            public void onClick(MenuClickEvent event) {
-                if(event.entity() instanceof Player && !_this.config().silent() && _this.getIcon(event.slot()) != null)
-                    ChestInterface.playInteractionSound((Player) event.entity());
-            }
-        });
+        this.addListener(this);
     }
 
     //
