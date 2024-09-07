@@ -7,12 +7,12 @@ import org.bukkit.inventory.MerchantInventory;
 
 public class TradeInterfaceCloseEvent extends TradeInterfaceEvent<InventoryCloseEvent> {
 
-    public TradeInterfaceCloseEvent(InventoryCloseEvent bukkitEvent, HumanEntity entity, MerchantInventory inventory, TradeInterface menu) {
-        this(bukkitEvent, entity, inventory, menu, true);
+    public TradeInterfaceCloseEvent(InventoryCloseEvent bukkitEvent, HumanEntity entity, MerchantInventory inventory, TradeInterface<?> tradeInterface) {
+        this(bukkitEvent, entity, inventory, tradeInterface, true);
     }
 
-    public TradeInterfaceCloseEvent(InventoryCloseEvent bukkitEvent, HumanEntity entity, MerchantInventory inventory, TradeInterface menu, boolean cancellable) {
-        super(bukkitEvent, entity, inventory, menu, cancellable);
+    public TradeInterfaceCloseEvent(InventoryCloseEvent bukkitEvent, HumanEntity entity, MerchantInventory inventory, TradeInterface<?> tradeInterface, boolean cancellable) {
+        super(bukkitEvent, entity, inventory, tradeInterface, cancellable);
     }
 
 }

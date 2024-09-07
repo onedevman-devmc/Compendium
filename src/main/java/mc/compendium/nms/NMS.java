@@ -5,7 +5,6 @@ import mc.compendium.reflection.FieldUtil;
 import mc.compendium.reflection.IncompatibleInheritanceException;
 import mc.compendium.reflection.MethodUtil;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.Services;
 import net.minecraft.server.dedicated.DedicatedPlayerList;
 import net.minecraft.server.dedicated.DedicatedServer;
 import net.minecraft.server.level.EntityPlayer;

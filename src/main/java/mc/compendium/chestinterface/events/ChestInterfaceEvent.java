@@ -2,7 +2,6 @@ package mc.compendium.chestinterface.events;
 
 import mc.compendium.chestinterface.components.ChestInterface;
 import org.bukkit.entity.HumanEntity;
-import org.bukkit.event.Event;
 import org.bukkit.inventory.Inventory;
 
 public abstract class ChestInterfaceEvent<

@@ -1,8 +1,10 @@
 package mc.compendium.chestinterface.bukkit;
 
+import mc.compendium.chestinterface.ChestInterfaceApi;
 import mc.compendium.chestinterface.components.*;
 import mc.compendium.chestinterface.events.TradeSelectEvent;
 import mc.compendium.chestinterface.events.*;
+import mc.compendium.utils.bukkit.Inventories;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.EventHandler;
@@ -10,14 +12,22 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.*;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.Merchant;
 import org.bukkit.inventory.MerchantInventory;
-import org.bukkit.plugin.java.JavaPlugin;
 
-public record InterfaceEventBukkitListener(JavaPlugin plugin) implements Listener {
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+public record InterfaceEventBukkitListener(ChestInterfaceApi api) implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST)
     private void onOpenInventory(InventoryOpenEvent event) {
+        if(!this.api().enabled()) return;
+
+        //
+
         Inventory inventory = event.getInventory();
         HumanEntity player = event.getPlayer();
 
@@ -28,7 +38,7 @@ public record InterfaceEventBukkitListener(JavaPlugin plugin) implements Listene
         if (event.getInventory() instanceof MerchantInventory merchantInventory) {
             Merchant merchant = merchantInventory.getMerchant();
 
-            TradeInterface tradeInterface = TradeInterface.getAssociated(merchant);
+            TradeInterface<?> tradeInterface = TradeInterface.getAssociated(merchant);
             if (tradeInterface == null) return;
 
             accepted = tradeInterface.handle(new TradeInterfaceOpenEvent(event, player, merchantInventory, tradeInterface));
@@ -36,8 +46,10 @@ public record InterfaceEventBukkitListener(JavaPlugin plugin) implements Listene
             ChestInterface<?, ?> chestInterface = ChestInterface.getAssociated(inventory);
             if (chestInterface == null) return;
 
-            if (chestInterface instanceof ChestMenu menu)
-                accepted = menu.handle(new MenuOpenEvent(event, player, inventory, menu));
+            if (chestInterface instanceof ChestMenu<?> menu)
+                accepted = menu.handle(new ChestMenuOpenEvent(event, player, inventory, menu));
+            else if (chestInterface instanceof HopperMenu<?> menu)
+                accepted = menu.handle(new HopperMenuOpenEvent(event, player, inventory, menu));
             else if (chestInterface instanceof AnvilInput anvilInput)
                 accepted = anvilInput.handle(new AnvilInputOpenEvent(event, player, inventory, anvilInput));
         }
@@ -51,6 +63,10 @@ public record InterfaceEventBukkitListener(JavaPlugin plugin) implements Listene
 
     @EventHandler(priority = EventPriority.HIGHEST)
     private void onCloseInventory(InventoryCloseEvent event) {
+        if(!this.api().enabled()) return;
+
+        //
+
         Inventory inventory = event.getInventory();
         HumanEntity player = event.getPlayer();
 
@@ -63,7 +79,7 @@ public record InterfaceEventBukkitListener(JavaPlugin plugin) implements Listene
         if (event.getInventory() instanceof MerchantInventory merchantInventory) {
             Merchant merchant = merchantInventory.getMerchant();
 
-            TradeInterface tradeInterface = TradeInterface.getAssociated(merchant);
+            TradeInterface<?> tradeInterface = TradeInterface.getAssociated(merchant);
             if (tradeInterface == null) return;
 
             accepted = tradeInterface.handle(new TradeInterfaceCloseEvent(event, player, merchantInventory, tradeInterface));
@@ -71,8 +87,10 @@ public record InterfaceEventBukkitListener(JavaPlugin plugin) implements Listene
             chestInterface = ChestInterface.getAssociated(inventory);
             if (chestInterface == null) return;
 
-            if (chestInterface instanceof ChestMenu menu)
-                accepted = menu.handle(new MenuCloseEvent(event, player, inventory, menu));
+            if (chestInterface instanceof ChestMenu<?> menu)
+                accepted = menu.handle(new ChestMenuCloseEvent(event, player, inventory, menu));
+            else if (chestInterface instanceof HopperMenu<?> menu)
+                accepted = menu.handle(new HopperMenuCloseEvent(event, player, inventory, menu));
             else if (chestInterface instanceof AnvilInput anvilInput)
                 accepted = anvilInput.handle(new AnvilInputCloseEvent(event, player, inventory, anvilInput));
         }
@@ -82,11 +100,11 @@ public record InterfaceEventBukkitListener(JavaPlugin plugin) implements Listene
         final ChestInterface<?, ?> finalChestInterface = chestInterface;
         if (!accepted) {
             Bukkit.getScheduler().scheduleSyncDelayedTask(
-                    this.plugin(), () -> {
-                        if (finalChestInterface != null && !finalChestInterface.equals(ChestInterface.getAssociated(player.getOpenInventory().getTopInventory())))
-                            player.openInventory(inventory);
-                    },
-                    1L
+                this.api().getPlugin(), () -> {
+                    if (finalChestInterface != null && !finalChestInterface.equals(ChestInterface.getAssociated(player.getOpenInventory().getTopInventory())))
+                        player.openInventory(inventory);
+                },
+                1L
             );
         }
     }
@@ -95,47 +113,116 @@ public record InterfaceEventBukkitListener(JavaPlugin plugin) implements Listene
 
     @EventHandler(priority = EventPriority.HIGHEST)
     private void onClickInventory(InventoryClickEvent event) {
+        if(!this.api().enabled()) return;
+
+        //
+
         Inventory inventory = event.getInventory();
-        HumanEntity entity = event.getWhoClicked();
+        Inventory clickedInventory = event.getClickedInventory();
+
+        boolean clickedInInterfaceInventory = inventory.equals(clickedInventory);
+
+        HumanEntity player = event.getWhoClicked();
 
         boolean accepted = true;
+
+        //
+
+        ItemStack cursorItem = event.getCursor();
+        ItemStack clickedItem = event.getCurrentItem();
+        int slot = event.getSlot();
+        InventoryType.SlotType slotType = event.getSlotType();
+        ClickType clickType = event.getClick();
+        TradeSlotType tradeSlotType = TradeSlotType.getBySlot(slot);
 
         //
 
         if (event.getInventory() instanceof MerchantInventory merchantInventory) {
             Merchant merchant = merchantInventory.getMerchant();
 
-            TradeInterface tradeInterface = TradeInterface.getAssociated(merchant);
+            TradeInterface<?> tradeInterface = TradeInterface.getAssociated(merchant);
             if (tradeInterface == null) return;
 
+            TradeInterfaceClickEvent clickEvent = new TradeInterfaceClickEvent(
+                event, player, merchantInventory, tradeInterface,
+                cursorItem, clickedItem, clickedInventory, slot, slotType, clickType,
+                tradeSlotType
+            );
+            accepted = tradeInterface.handle(clickEvent);
+
             if (InventoryType.SlotType.RESULT.equals(event.getSlotType())) {
-                TradeEvent tradeEvent = new TradeEvent(event, entity, merchantInventory, tradeInterface);
-                accepted = tradeInterface.handle(tradeEvent);
+                InventoryAction inventoryAction = event.getAction();
+
+                int recipeIndex = merchantInventory.getSelectedRecipeIndex();
+                Trade trade = tradeInterface.getTradeList().get(recipeIndex);
+
+                synchronized (trade) {
+                    int requestedUses = 0;
+
+                    List<ItemStack> givenIngredients = new ArrayList<>();
+                    for (int i = 0; i < 2; ++i) givenIngredients.add(merchantInventory.getItem(i));
+                    givenIngredients = Collections.unmodifiableList(givenIngredients);
+
+                    TradeAction tradeAction = TradeAction.UNKNOWN;
+
+                    if (TradeEvent.SINGLE_TRADE_BUKKIT_ACTIONS.contains(inventoryAction)) {
+                        tradeAction = TradeAction.SINGLE_TRADE;
+
+                        requestedUses = 1;
+                    } else if (TradeEvent.MULTIPLE_TRADE_BUKKIT_ACTIONS.contains(inventoryAction)) {
+                        tradeAction = TradeAction.MULTIPLE_TRADE;
+
+                        requestedUses = TradeEvent.calculateMaxTheoricalRecipeUses(trade, givenIngredients.get(0), givenIngredients.get(1));
+
+                        ItemStack theoricalResultItemStack = trade.getResult().clone();
+                        theoricalResultItemStack.setAmount(requestedUses);
+
+                        requestedUses = Inventories.getContainableQuantityIn(
+                            Inventories.copyContentInto(player.getInventory().getStorageContents(), Bukkit.createInventory(null, 9 * 4)),
+                            theoricalResultItemStack
+                        );
+                    }
+
+                    //
+
+                    TradeEvent tradeEvent = new TradeEvent(
+                        event, player, merchantInventory, tradeInterface,
+                        cursorItem, clickedItem, clickedInventory, slot, slotType, clickType,
+                        tradeSlotType, recipeIndex, trade, requestedUses, givenIngredients, tradeAction
+                    );
+
+                    if (requestedUses == 0) tradeEvent.setCancelled(true);
+                    if (!tradeEvent.cancelled()) tradeEvent.setCancelled(clickEvent.cancelled());
+
+                    accepted = tradeInterface.handle(tradeEvent);
+                }
             }
         } else {
             ChestInterface<?, ?> chestInterface = ChestInterface.getAssociated(inventory);
             if (chestInterface == null) return;
 
-            ChestIcon icon = null;
+            AbstractChestIcon<?> icon = null;
             ChestInterfaceEvent<?> chestInterfaceEvent = null;
 
-            int slot = event.getSlot();
-            ClickType mouseClick = event.getClick();
-
-            if (chestInterface instanceof ChestMenu menu) {
-                icon = menu.getIcon(slot);
-                chestInterfaceEvent = new MenuClickEvent(event, entity, inventory, menu, event.getCurrentItem(), slot, mouseClick);
+            if (chestInterface instanceof ChestMenu<?> menu) {
+                if(clickedInInterfaceInventory) icon = menu.getIcon(slot);
+                chestInterfaceEvent = new ChestMenuClickEvent(event, player, inventory, menu, cursorItem, clickedItem, clickedInventory, slot, slotType, clickType, icon);
+            } else if (chestInterface instanceof HopperMenu<?> menu) {
+                if(clickedInInterfaceInventory) icon = menu.getIcon(slot);
+                chestInterfaceEvent = new HopperMenuClickEvent(event, player, inventory, menu, cursorItem, clickedItem, clickedInventory, slot, slotType, clickType, icon);
             } else if (chestInterface instanceof AnvilInput anvilInput) {
-                icon = anvilInput.config().inputIcon();
-                chestInterfaceEvent = new AnvilInputClickEvent(event, entity, inventory, anvilInput, event.getCurrentItem(), slot, mouseClick);
+                if(clickedInInterfaceInventory) icon = anvilInput.config().inputIcon();
+                chestInterfaceEvent = new AnvilInputClickEvent(event, player, inventory, anvilInput, cursorItem, clickedItem, clickedInventory, slot, slotType, clickType);
             }
 
-            if (icon != null)
-                accepted = icon.handle(new ChestIconClickEvent(event, entity, inventory, chestInterface, icon, event.getCurrentItem(), slot, mouseClick));
-
             if (chestInterfaceEvent != null) {
-                chestInterfaceEvent.setCancelled(accepted);
                 accepted = chestInterface.handle(chestInterfaceEvent);
+            }
+
+            if (icon != null) {
+                ChestIconClickEvent iconClickEvent = new ChestIconClickEvent(event, player, inventory, chestInterface, icon, cursorItem, clickedItem, clickedInventory, slot, slotType, clickType);
+                iconClickEvent.setCancelled(!accepted);
+                accepted = icon.handle(iconClickEvent);
             }
         }
 
@@ -146,18 +233,25 @@ public record InterfaceEventBukkitListener(JavaPlugin plugin) implements Listene
 
     @EventHandler
     private void onSelectTrade(org.bukkit.event.inventory.TradeSelectEvent event) {
+        if(!this.api().enabled()) return;
+
+        //
+
         MerchantInventory inventory = event.getInventory();
         Merchant merchant = inventory.getMerchant();
         HumanEntity player = event.getWhoClicked();
 
-        TradeInterface tradeInterface = TradeInterface.getAssociated(merchant);
+        TradeInterface<?> tradeInterface = TradeInterface.getAssociated(merchant);
         if (tradeInterface == null) return;
 
         boolean accepted = true;
 
         //
 
-        TradeSelectEvent tradeSelectEvent = new TradeSelectEvent(event, player, inventory, tradeInterface);
+        int tradeIndex = event.getIndex();
+        Trade trade = tradeInterface.getTradeList().get(tradeIndex);
+
+        TradeSelectEvent tradeSelectEvent = new TradeSelectEvent(event, player, inventory, tradeInterface, tradeIndex, trade);
         accepted = tradeInterface.handle(tradeSelectEvent);
 
         //

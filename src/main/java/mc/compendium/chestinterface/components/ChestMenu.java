@@ -6,10 +6,12 @@ import mc.compendium.chestinterface.events.BasicMenuEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.inventory.Inventory;
 
-public class ChestMenu extends BasicMenu<ChestMenuConfig, BasicMenuEvent<?>> {
+public class ChestMenu<
+    IconType extends AbstractChestIcon<?>
+> extends BasicMenu<ChestMenuConfig, IconType, BasicMenuEvent<?, ChestMenu<IconType>>> {
 
     public ChestMenu(ChestMenuConfig config) {
-        super(config, (Class<BasicMenuEvent<?>>) ((Class<?>) BasicMenuEvent.class));
+        super(config, (Class<BasicMenuEvent<?, ChestMenu<IconType>>>) ((Class<?>) BasicMenuEvent.class));
     }
 
     //
@@ -18,7 +20,7 @@ public class ChestMenu extends BasicMenu<ChestMenuConfig, BasicMenuEvent<?>> {
     public Inventory toBukkit() {
         Inventory inventory = Bukkit.createInventory(new ChestInterfaceBukkitIdentifier(this), this.config().rows() * 9, this.config().name());
 
-        ChestIcon icon;
+        IconType icon;
         for(int i = 0; i < this.config().rows()*9; ++i) {
             icon = this.getIcon(i);
 

@@ -1,7 +1,7 @@
 package mc.compendium.chestinterface.components;
 
-import mc.compendium.chestinterface.events.InterfaceEventManager;
 import mc.compendium.chestinterface.events.InterfaceEvent;
+import mc.compendium.chestinterface.events.InterfaceEventManager;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;

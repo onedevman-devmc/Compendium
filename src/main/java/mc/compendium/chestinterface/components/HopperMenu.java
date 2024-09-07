@@ -7,14 +7,16 @@ import org.bukkit.Bukkit;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.Inventory;
 
-public class HopperMenu extends BasicMenu<HopperMenuConfig, BasicMenuEvent<?>> {
+public class HopperMenu<
+    IconType extends AbstractChestIcon<?>
+> extends BasicMenu<HopperMenuConfig, IconType, BasicMenuEvent<?, HopperMenu<IconType>>> {
 
     public static final int MAX_HOPPER_INVENTORY_SLOT_COUNT = 5;
 
     //
 
     public HopperMenu(HopperMenuConfig config) {
-        super(config, (Class<BasicMenuEvent<?>>) ((Class<?>) BasicMenuEvent.class));
+        super(config, (Class<BasicMenuEvent<?, HopperMenu<IconType>>>) ((Class<?>) BasicMenuEvent.class));
     }
 
     //

@@ -50,31 +50,31 @@ public class AnvilInput extends ChestInterface<AnvilInputConfig, AnvilInputEvent
 
     @EventHandler(priority = EventHandlerPriority.HIGHEST)
     public void onOpen(AnvilInputOpenEvent event) {
-        this.processingInputPlayers.put(event.entity().getUniqueId().toString(), Pair.of(event.inventory(), ""));
+        this.processingInputPlayers.put(event.getPlayer().getUniqueId().toString(), Pair.of(event.getInventory(), ""));
     }
 
     @EventHandler(priority = EventHandlerPriority.LOWEST)
     public void onClose(AnvilInputCloseEvent event) {
-        if(event.entity() instanceof Player && !this.config().silent())
-            playInteractionSound((Player) event.entity());
+        if(event.getPlayer() instanceof Player && !this.config().silent())
+            playInteractionSound((Player) event.getPlayer());
 
-        this.processingInputPlayers.remove(event.entity().getUniqueId().toString());
+        this.processingInputPlayers.remove(event.getPlayer().getUniqueId().toString());
     }
 
     @EventHandler(priority = EventHandlerPriority.HIGHEST, ignoreCancelled = true)
     public void onClick(AnvilInputClickEvent event) {
-        if(event.entity() instanceof Player player) {
+        if(event.getPlayer() instanceof Player player) {
             player.setExp(player.getExp());
 
-            if(event.slot() != AnvilInput.DEFAULT_ANVIL_OUTPUT_SLOT) return;
+            if(event.getSlot() != AnvilInput.DEFAULT_ANVIL_OUTPUT_SLOT) return;
 
             if(!this.config().silent())
                 playInteractionSound(player);
 
-            Pair<Inventory, String> pair = this.processingInputPlayers.get(event.entity().getUniqueId().toString());
+            Pair<Inventory, String> pair = this.processingInputPlayers.get(event.getPlayer().getUniqueId().toString());
             String inputText = pair.last();
 
-            AnvilInputSubmitEvent inputEvent = new AnvilInputSubmitEvent(null, event.entity(), event.inventory(), this, inputText);
+            AnvilInputSubmitEvent inputEvent = new AnvilInputSubmitEvent(event.getBukkitEvent(), event.getPlayer(), event.getInventory(), this, inputText);
             boolean accepted = this.handle(inputEvent);
 
             player.closeInventory();

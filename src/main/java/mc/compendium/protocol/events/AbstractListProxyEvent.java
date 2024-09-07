@@ -1,7 +1,6 @@
 package mc.compendium.protocol.events;
 
 import mc.compendium.events.Event;
-import net.minecraft.network.NetworkManager;
 
 public abstract class AbstractListProxyEvent<T> extends Event {
 

@@ -1,6 +1,5 @@
 package mc.compendium.protocol.events;
 
-import mc.compendium.events.WrapperEvent;
 import net.minecraft.network.protocol.Packet;
 import org.bukkit.entity.Player;
 

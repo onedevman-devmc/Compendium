@@ -1,8 +1,7 @@
 package mc.compendium.events;
 
-import mc.compendium.protocol.events.ProtocolEvent;
-import mc.compendium.types.Pair;
 import mc.compendium.reflection.MethodUtil;
+import mc.compendium.types.Pair;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;

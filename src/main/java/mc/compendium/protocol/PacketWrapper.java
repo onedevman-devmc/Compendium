@@ -4,7 +4,6 @@ import mc.compendium.nms.protocol.PacketUtil;
 import mc.compendium.reflection.DefaultValue;
 import mc.compendium.reflection.FieldUtil;
 import mc.compendium.reflection.NoSuchConstructorException;
-import net.minecraft.network.PacketListener;
 import net.minecraft.network.protocol.Packet;
 
 import java.lang.reflect.Field;

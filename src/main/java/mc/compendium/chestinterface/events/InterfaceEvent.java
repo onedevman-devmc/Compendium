@@ -33,12 +33,12 @@ public abstract class InterfaceEvent<
 
     //
 
-    public BukkitEventType bukkitEvent() { return this.bukkitEvent; }
+    public BukkitEventType getBukkitEvent() { return this.bukkitEvent; }
 
-    public HumanEntity entity() { return this.entity; }
+    public HumanEntity getPlayer() { return this.entity; }
 
-    public InventoryType inventory() { return this.inventory; }
+    public InventoryType getInventory() { return this.inventory; }
 
-    public I relevantInterface() { return this.relevantInterface; }
+    public I getInterface() { return this.relevantInterface; }
 
 }

@@ -5,6 +5,7 @@ import mc.compendium.chestinterface.events.ChestIconClickEvent;
 import mc.compendium.chestinterface.events.ChestIconEvent;
 import mc.compendium.chestinterface.events.InterfaceEventListener;
 import mc.compendium.events.EventHandler;
+import mc.compendium.types.Pair;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemFlag;
@@ -17,10 +18,14 @@ import java.util.function.Consumer;
 
 public abstract class AbstractChestIcon<
     ConfigType extends ChestIconConfig
-> extends ConfigurableInterface<ConfigType, ItemStack, Inventory, ChestIconEvent<?>> {
+> extends ConfigurableInterface<ConfigType, ItemStack, Inventory, ChestIconEvent<?>> implements InterfaceEventListener {
 
     public AbstractChestIcon(ConfigType config) {
         super(config, (Class<ChestIconEvent<?>>) ((Class<?>) ChestIconEvent.class));
+
+        //
+
+        this.addListener(this);
     }
 
     //
@@ -41,7 +46,7 @@ public abstract class AbstractChestIcon<
     //
 
     public ItemStack toBukkit() {
-        ItemStack result = new ItemStack(this.config().material(), this.config().count());
+        ItemStack result = new ItemStack(this.config().getMaterial(), this.config().getAmount());
 
         ItemMeta meta = result.getItemMeta();
 
@@ -50,7 +55,7 @@ public abstract class AbstractChestIcon<
 
             //
 
-            List<String> finalDescription = new ArrayList<>(this.config().description());
+            List<String> finalDescription = new ArrayList<>(this.config().getDescription());
             int finalDescriptionLineCount = finalDescription.size();
 
             for(int i = 0; i < finalDescriptionLineCount; ++i)
@@ -60,7 +65,13 @@ public abstract class AbstractChestIcon<
 
             //
 
-            if(this.config().enchanted()) {
+            List<Pair<Enchantment, Integer>> enchantmentList = this.config().getEnchantmentList();
+
+            if(enchantmentList != null && !enchantmentList.isEmpty()) {
+                for(Pair<Enchantment, Integer> enchantmentPair : enchantmentList)
+                    meta.addEnchant(enchantmentPair.first(), enchantmentPair.last(), true);
+            }
+            else if(this.config().getEnchanted()) {
                 meta.addEnchant(Enchantment.VANISHING_CURSE, 0, true);
                 meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
             }

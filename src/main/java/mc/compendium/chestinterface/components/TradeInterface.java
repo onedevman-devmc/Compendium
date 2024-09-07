@@ -4,42 +4,79 @@ import mc.compendium.chestinterface.components.configurations.TradeInterfaceConf
 import mc.compendium.chestinterface.events.InterfaceEventListener;
 import mc.compendium.chestinterface.events.TradeEvent;
 import mc.compendium.chestinterface.events.TradeInterfaceEvent;
-import mc.compendium.chestinterface.events.TradeSelectEvent;
 import mc.compendium.events.EventHandler;
+import mc.compendium.events.EventHandlerPriority;
 import org.bukkit.Bukkit;
-import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.Merchant;
 import org.bukkit.inventory.MerchantInventory;
-import org.bukkit.inventory.MerchantRecipe;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.WeakHashMap;
-import java.util.function.Consumer;
+import java.util.*;
 
-public class TradeInterface extends ConfigurableInterface<TradeInterfaceConfig, Merchant, MerchantInventory, TradeInterfaceEvent<?>> {
+public class TradeInterface<
+    TradeType extends Trade
+> extends ConfigurableInterface<
+    TradeInterfaceConfig,
+    Merchant,
+    MerchantInventory,
+    TradeInterfaceEvent<?>
+> implements InterfaceEventListener {
 
-    private static final Map<Merchant, TradeInterface> MERCHANT_REGISTRY = new WeakHashMap<>();
+    private static final Map<Merchant, TradeInterface<?>> MERCHANT_REGISTRY = new WeakHashMap<>();
 
-    public static TradeInterface getAssociated(Merchant merchant) {
+    public static TradeInterface<?> getAssociated(Merchant merchant) {
         return MERCHANT_REGISTRY.get(merchant);
     }
 
     //
 
-    private final List<MerchantRecipe> recipes = new ArrayList<>();
+    @EventHandler(priority = EventHandlerPriority.LOWEST)
+    public void onTrade(TradeEvent event) {
+        Trade trade = event.getTrade();
+        List<ItemStack> givenPrices = event.getGivenPrices();
+        TradeAction tradeAction = event.getAction();
+
+        if(TradeAction.UNKNOWN.equals(tradeAction)) return;
+
+        Map<TradeSlotType, ItemStack> tradeResult = trade.trade(givenPrices.get(0), givenPrices.get(1), event.getRequestedUses());
+
+        Set<TradeSlotType> tradeSlotTypesToUpdate = Set.of();
+
+        if(TradeAction.SINGLE_TRADE.equals(tradeAction)) {
+            tradeSlotTypesToUpdate = Set.of(TradeSlotType.RESULT);
+        }
+        else if(TradeAction.MULTIPLE_TRADE.equals(tradeAction)) {
+            event.setCancelled(true);
+
+            tradeSlotTypesToUpdate = Set.of(TradeSlotType.FIRST_INGREDIENT, TradeSlotType.SECOND_INGREDIENT);
+            event.getPlayer().getInventory().addItem(tradeResult.get(TradeSlotType.RESULT));
+        }
+
+        for(TradeSlotType tradeSlotTypeToUpdate : tradeSlotTypesToUpdate)
+            event.getInventory().setItem(tradeSlotTypeToUpdate.getSlot(), tradeResult.get(tradeSlotTypeToUpdate));
+    }
+
+    //
+
+    private List<TradeType> tradeList = Collections.synchronizedList(new ArrayList<>());
 
     //
 
     public TradeInterface(TradeInterfaceConfig config) {
         super(config, (Class<TradeInterfaceEvent<?>>) ((Class<?>) TradeInterfaceEvent.class));
+
+        //
+
+        this.addListener(this);
     }
 
     //
 
-    public List<MerchantRecipe> recipes() { return recipes; }
+    public List<TradeType> getTradeList() { return tradeList; }
+
+    //
+
+    public void setTradeList(List<TradeType> tradeList) { this.tradeList = Collections.synchronizedList(tradeList); }
 
     //
 
@@ -47,7 +84,7 @@ public class TradeInterface extends ConfigurableInterface<TradeInterfaceConfig, 
     public Merchant toBukkit() {
         Merchant merchant = Bukkit.createMerchant(this.config().name());
 
-        merchant.setRecipes(recipes);
+        merchant.setRecipes(this.getTradeList().stream().map(Trade::asRecipe).toList());
 
         MERCHANT_REGISTRY.put(merchant, this);
         return merchant;

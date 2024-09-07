@@ -16,24 +16,25 @@ import java.util.Map;
 
 public abstract class BasicMenu<
     ConfigType extends MenuConfig,
-    EventType extends BasicMenuEvent<?>
+    IconType extends AbstractChestIcon<?>,
+    EventType extends BasicMenuEvent<?, ?>
 > extends ChestInterface<ConfigType, EventType> implements InterfaceEventListener {
 
     @EventHandler(priority = EventHandlerPriority.HIGHEST)
-    public void onClose(MenuCloseEvent event) {
-        if(event.entity() instanceof Player && !this.config().silent())
-            ChestInterface.playInteractionSound((Player) event.entity());
+    public void onClose(MenuCloseEvent<?> event) {
+        if(event.getPlayer() instanceof Player && !this.config().silent())
+            ChestInterface.playInteractionSound((Player) event.getPlayer());
     }
 
     @EventHandler(priority = EventHandlerPriority.HIGHEST)
-    public void onClick(MenuClickEvent event) {
-        if(event.entity() instanceof Player && !this.config().silent() && this.getIcon(event.slot()) != null)
-            ChestInterface.playInteractionSound((Player) event.entity());
+    public void onClick(MenuClickEvent<?> event) {
+        if(event.getPlayer() instanceof Player && !this.config().silent() && this.getIcon(event.getSlot()) != null)
+            ChestInterface.playInteractionSound((Player) event.getPlayer());
     }
 
     //
 
-    private final Map<Integer, ChestIcon> icons = new HashMap<>();
+    private final Map<Integer, IconType> icons = new HashMap<>();
 
     //
 
@@ -47,7 +48,7 @@ public abstract class BasicMenu<
 
     //
 
-    public Map<Integer, ChestIcon> icons() { return Collections.unmodifiableMap(this.icons); }
+    public Map<Integer, IconType> icons() { return Collections.unmodifiableMap(this.icons); }
 
     //
 
@@ -60,7 +61,11 @@ public abstract class BasicMenu<
 
     //
 
-    public ChestIcon getIcon(int slot) {
+    public IconType getIcon(int row, int col) {
+        return this.getIcon((9 * row) + col);
+    }
+
+    public IconType getIcon(int slot) {
         if(this.isSlotEmpty(slot))
             return null;
 
@@ -69,11 +74,11 @@ public abstract class BasicMenu<
 
     //
 
-    public void setIcon(int row, int col, ChestIcon icon) {
-        this.setIcon(9*row+col, icon);
+    public void setIcon(int row, int col, IconType icon) {
+        this.setIcon((9 * row) + col, icon);
     }
 
-    public void setIcon(int slot, ChestIcon icon) {
+    public void setIcon(int slot, IconType icon) {
         if(!this.isSlotEmpty(slot))
             this.icons.remove(slot);
 

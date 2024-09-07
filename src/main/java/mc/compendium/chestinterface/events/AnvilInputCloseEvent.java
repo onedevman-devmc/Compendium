@@ -2,19 +2,17 @@ package mc.compendium.chestinterface.events;
 
 import mc.compendium.chestinterface.components.AnvilInput;
 import org.bukkit.entity.HumanEntity;
-import org.bukkit.event.Event;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.Inventory;
 
-public class AnvilInputCloseEvent extends AnvilInputEvent {
+public class AnvilInputCloseEvent extends AnvilInputEvent<InventoryCloseEvent> {
 
-    public AnvilInputCloseEvent(Event bukkitEvent, HumanEntity entity, Inventory inventory, AnvilInput anvilInput) {
-        super(bukkitEvent, entity, inventory, anvilInput);
+    public AnvilInputCloseEvent(InventoryCloseEvent bukkitEvent, HumanEntity entity, Inventory inventory, AnvilInput anvilInput) {
+        this(bukkitEvent, entity, inventory, anvilInput, true);
     }
 
-    //
-
-    @Override
-    public InventoryCloseEvent bukkitEvent() { return (InventoryCloseEvent) super.bukkitEvent(); }
+    public AnvilInputCloseEvent(InventoryCloseEvent bukkitEvent, HumanEntity entity, Inventory inventory, AnvilInput anvilInput, boolean cancellable) {
+        super(bukkitEvent, entity, inventory, anvilInput, cancellable);
+    }
 
 }

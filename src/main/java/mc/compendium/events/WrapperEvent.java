@@ -1,7 +1,5 @@
 package mc.compendium.events;
 
-import org.bukkit.Bukkit;
-
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.WildcardType;
