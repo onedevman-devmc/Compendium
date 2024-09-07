@@ -40,9 +40,10 @@ repositories {
     maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
     maven { url 'https://oss.sonatype.org/content/repositories/central' }
 
-    maven { url 'https://maven.onedevman.eu.org/' }
+    maven { url 'https://libraries.minecraft.net/'}
 
     maven { url 'https://jitpack.io/'}
+    maven { url 'https://maven.onedevman.eu.org/' }
 }
 
 //
