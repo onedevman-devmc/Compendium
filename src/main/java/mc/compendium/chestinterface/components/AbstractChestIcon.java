@@ -6,6 +6,7 @@ import mc.compendium.chestinterface.events.ChestIconEvent;
 import mc.compendium.chestinterface.events.InterfaceEventListener;
 import mc.compendium.events.EventHandler;
 import mc.compendium.types.Pair;
+import org.bukkit.Bukkit;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemFlag;
@@ -71,10 +72,7 @@ public abstract class AbstractChestIcon<
                 for(Pair<Enchantment, Integer> enchantmentPair : enchantmentList)
                     meta.addEnchant(enchantmentPair.first(), enchantmentPair.last(), true);
             }
-            else if(this.config().getEnchanted()) {
-                meta.addEnchant(Enchantment.VANISHING_CURSE, 0, true);
-                meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
-            }
+            else if(this.config().getEnchanted()) { meta.setEnchantmentGlintOverride(true); }
 
             //
 
