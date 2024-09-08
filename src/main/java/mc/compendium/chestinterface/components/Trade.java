@@ -55,8 +55,7 @@ public class Trade extends MerchantRecipe {
 
     @Override
     public synchronized int getMaxUses() {
-        int maxStorableEarnings = this.getMaxEarnings() - this.getEarnings();
-        return Math.min(this.getStocks(), maxStorableEarnings);
+        return Math.min(this.getStocks(), this.getAvailableEarningsSpace());
     }
 
     @Override
@@ -79,6 +78,8 @@ public class Trade extends MerchantRecipe {
 
     public synchronized int getEarnings() { return this.earnings; }
 
+    public synchronized int getAvailableEarningsSpace() { return this.getMaxEarnings() - this.getEarnings(); }
+
     public synchronized int getMaxEarnings() { return this.maxEarnings; }
 
     //
@@ -90,7 +91,9 @@ public class Trade extends MerchantRecipe {
     }
 
     public synchronized void setComplementaryPrice(ItemStack complementaryPrice) {
-        if(complementaryPrice != null) this.setIngredients(List.of(this.getIngredients().get(0), complementaryPrice));
+        List<ItemStack> currentIngredients = this.getIngredients();
+        ItemStack price = currentIngredients.get(0);
+        this.setIngredients(complementaryPrice == null ? List.of(price) : List.of(price, complementaryPrice));
     }
 
     public synchronized void setResult(ItemStack result) {
@@ -124,7 +127,7 @@ public class Trade extends MerchantRecipe {
         this.earnings = earnings;
     }
 
-    public synchronized void addEarnings(int toAdd) { this.setEarnings(Math.min(this.getEarnings() + toAdd, this.getMaxEarnings())); }
+    public synchronized void addEarnings(int toAdd) { this.setEarnings(Math.min(this.getEarnings() + toAdd, this.getAvailableEarningsSpace())); }
 
     public synchronized void removeEarnings(int toRemove) { this.setEarnings(Math.max(this.getEarnings() - toRemove, 0)); }
 
@@ -156,8 +159,7 @@ public class Trade extends MerchantRecipe {
         }
         else tradeComplementaryPrice = new ItemStack(Material.AIR, 0);
 
-        requestedStocks = Math.min(this.getStocks(), requestedStocks);
-        requestedStocks = Math.min(this.getMaxEarnings() - this.getEarnings(), requestedStocks);
+        requestedStocks = Math.min(this.getMaxUses(), requestedStocks);
         requestedStocks = Math.min(maxCount, requestedStocks);
 
         //
