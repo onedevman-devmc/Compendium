@@ -3,7 +3,7 @@ package mc.compendium;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
-public class CompendiumMain extends JavaPlugin implements Listener {
+public class Compendium extends JavaPlugin implements Listener {
 
 //    private AnvilInput anvilInput = null;
 //    private TradeInterface tradeInterface = null;
