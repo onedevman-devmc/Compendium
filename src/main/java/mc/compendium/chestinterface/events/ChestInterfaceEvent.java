@@ -5,19 +5,19 @@ import org.bukkit.entity.HumanEntity;
 import org.bukkit.inventory.Inventory;
 
 public abstract class ChestInterfaceEvent<
-    BukkitEventType extends org.bukkit.event.Event
+    OriginalEventType
 > extends InterfaceEvent<
-    BukkitEventType,
+    OriginalEventType,
     Inventory,
     ChestInterface<?, ?>
 > {
 
-    public ChestInterfaceEvent(BukkitEventType bukkitEvent, HumanEntity entity, Inventory inventory, ChestInterface<?, ?> relevantInterface) {
-        this(bukkitEvent, entity, inventory, relevantInterface, true);
+    public ChestInterfaceEvent(OriginalEventType originalEvent, HumanEntity entity, Inventory inventory, ChestInterface<?, ?> relevantInterface) {
+        this(originalEvent, entity, inventory, relevantInterface, true);
     }
 
-    public ChestInterfaceEvent(BukkitEventType bukkitEvent, HumanEntity entity, Inventory inventory, ChestInterface<?, ?> relevantInterface, boolean cancellable) {
-        super(bukkitEvent, entity, inventory, relevantInterface, cancellable);
+    public ChestInterfaceEvent(OriginalEventType originalEvent, HumanEntity entity, Inventory inventory, ChestInterface<?, ?> relevantInterface, boolean cancellable) {
+        super(originalEvent, entity, inventory, relevantInterface, cancellable);
     }
 
 }

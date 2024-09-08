@@ -13,18 +13,18 @@ public class TradeSelectEvent extends TradeInterfaceEvent<org.bukkit.event.inven
     //
 
     public TradeSelectEvent(
-            org.bukkit.event.inventory.TradeSelectEvent bukkitEvent, HumanEntity entity, MerchantInventory inventory, TradeInterface<?> tradeInterface,
+            org.bukkit.event.inventory.TradeSelectEvent originalEvent, HumanEntity entity, MerchantInventory inventory, TradeInterface<?> tradeInterface,
             int tradeIndex, Trade trade
     ) {
-        this(bukkitEvent, entity, inventory, tradeInterface, tradeIndex, trade, true);
+        this(originalEvent, entity, inventory, tradeInterface, tradeIndex, trade, true);
     }
 
     public TradeSelectEvent(
-            org.bukkit.event.inventory.TradeSelectEvent bukkitEvent, HumanEntity entity, MerchantInventory inventory, TradeInterface<?> tradeInterface,
+            org.bukkit.event.inventory.TradeSelectEvent originalEvent, HumanEntity entity, MerchantInventory inventory, TradeInterface<?> tradeInterface,
             int tradeIndex, Trade trade,
             boolean cancellable
     ) {
-        super(bukkitEvent, entity, inventory, tradeInterface, cancellable);
+        super(originalEvent, entity, inventory, tradeInterface, cancellable);
 
         //
 

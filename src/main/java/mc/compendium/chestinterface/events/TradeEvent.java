@@ -64,32 +64,32 @@ public class TradeEvent extends TradeInterfaceClickEvent {
     private final Trade trade;
     private final int requestedUses;
     private final List<ItemStack> givenPrices;
-    private final TradeAction action;
+    private final TradeAction tradeAction;
 
     //
 
     public TradeEvent(
-            InventoryClickEvent bukkitEvent, HumanEntity entity, MerchantInventory inventory, TradeInterface tradeInterface,
-            ItemStack cursorItem, ItemStack clickedItem, Inventory clickedInventory, int slot, InventoryType.SlotType slotType, ClickType clickType,
+            InventoryClickEvent originalEvent, HumanEntity entity, MerchantInventory inventory, TradeInterface<?> tradeInterface,
+            ItemStack cursorItem, ItemStack clickedItem, Inventory clickedInventory, int slot, InventoryType.SlotType slotType, ClickType clickType, InventoryAction action,
             TradeSlotType tradeSlotType,
-            int tradeIndex, Trade trade, int requestedUses, List<ItemStack> givenPrices, TradeAction action
+            int tradeIndex, Trade trade, int requestedUses, List<ItemStack> givenPrices, TradeAction tradeAction
     ) {
         this(
-            bukkitEvent, entity, inventory, tradeInterface,
-            cursorItem, clickedItem, clickedInventory, slot, slotType, clickType,
-            tradeSlotType, tradeIndex, trade, requestedUses, givenPrices, action,
+            originalEvent, entity, inventory, tradeInterface,
+            cursorItem, clickedItem, clickedInventory, slot, slotType, clickType, action,
+            tradeSlotType, tradeIndex, trade, requestedUses, givenPrices, tradeAction,
             true
         );
     }
 
     public TradeEvent(
-            InventoryClickEvent bukkitEvent, HumanEntity entity, MerchantInventory inventory, TradeInterface<?> tradeInterface,
-            ItemStack cursorItem, ItemStack clickedItem, Inventory clickedInventory, int slot, InventoryType.SlotType slotType, ClickType clickType,
+            InventoryClickEvent originalEvent, HumanEntity entity, MerchantInventory inventory, TradeInterface<?> tradeInterface,
+            ItemStack cursorItem, ItemStack clickedItem, Inventory clickedInventory, int slot, InventoryType.SlotType slotType, ClickType clickType, InventoryAction action,
             TradeSlotType tradeSlotType,
-            int tradeIndex, Trade trade, int requestedUses, List<ItemStack> givenPrices, TradeAction action,
+            int tradeIndex, Trade trade, int requestedUses, List<ItemStack> givenPrices, TradeAction tradeAction,
             boolean cancellable
     ) {
-        super(bukkitEvent, entity, inventory, tradeInterface, cursorItem, clickedItem, clickedInventory, slot, slotType, clickType, tradeSlotType, cancellable);
+        super(originalEvent, entity, inventory, tradeInterface, cursorItem, clickedItem, clickedInventory, slot, slotType, clickType, action, tradeSlotType, cancellable);
 
         //
 
@@ -97,7 +97,7 @@ public class TradeEvent extends TradeInterfaceClickEvent {
         this.trade = trade;
         this.requestedUses = requestedUses;
         this.givenPrices = givenPrices;
-        this.action = action;
+        this.tradeAction = tradeAction;
     }
 
     //
@@ -110,6 +110,6 @@ public class TradeEvent extends TradeInterfaceClickEvent {
 
     public List<ItemStack> getGivenPrices() { return this.givenPrices; }
 
-    public TradeAction getAction() { return this.action; }
+    public TradeAction getTradeAction() { return this.tradeAction; }
 
 }

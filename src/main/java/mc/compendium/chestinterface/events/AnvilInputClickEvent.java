@@ -3,6 +3,7 @@ package mc.compendium.chestinterface.events;
 import mc.compendium.chestinterface.components.AnvilInput;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.inventory.ClickType;
+import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.Inventory;
@@ -16,21 +17,23 @@ public class AnvilInputClickEvent extends AnvilInputEvent<InventoryClickEvent> i
     private final int slot;
     private final InventoryType.SlotType slotType;
     private final ClickType clickType;
+    private final InventoryAction action;
 
     //
 
     public AnvilInputClickEvent(
-        InventoryClickEvent bukkitEvent, HumanEntity entity, Inventory inventory, AnvilInput anvilInput, ItemStack cursorItem,
-        ItemStack clickedItem, Inventory clickedInventory, int slot, InventoryType.SlotType slotType, ClickType clickType
+        InventoryClickEvent originalEvent, HumanEntity entity, Inventory inventory, AnvilInput anvilInput, ItemStack cursorItem,
+        ItemStack clickedItem, Inventory clickedInventory, int slot, InventoryType.SlotType slotType, ClickType clickType, InventoryAction action
     ) {
-        this(bukkitEvent, entity, inventory, anvilInput, cursorItem, clickedItem, clickedInventory, slot, slotType, clickType, true);
+        this(originalEvent, entity, inventory, anvilInput, cursorItem, clickedItem, clickedInventory, slot, slotType, clickType, action, true);
     }
 
     public AnvilInputClickEvent(
-        InventoryClickEvent bukkitEvent, HumanEntity entity, Inventory inventory, AnvilInput anvilInput, ItemStack cursorItem,
-        ItemStack clickedItem, Inventory clickedInventory, int slot, InventoryType.SlotType slotType, ClickType clickType, boolean cancellable
+        InventoryClickEvent originalEvent, HumanEntity entity, Inventory inventory, AnvilInput anvilInput, ItemStack cursorItem,
+        ItemStack clickedItem, Inventory clickedInventory, int slot, InventoryType.SlotType slotType, ClickType clickType, InventoryAction action,
+        boolean cancellable
     ) {
-        super(bukkitEvent, entity, inventory, anvilInput, cancellable);
+        super(originalEvent, entity, inventory, anvilInput, cancellable);
 
         this.cursorItem = cursorItem;
         this.clickedItem = clickedItem;
@@ -38,6 +41,7 @@ public class AnvilInputClickEvent extends AnvilInputEvent<InventoryClickEvent> i
         this.slot = slot;
         this.slotType = slotType;
         this.clickType = clickType;
+        this.action = action;
     }
 
     //
@@ -60,5 +64,8 @@ public class AnvilInputClickEvent extends AnvilInputEvent<InventoryClickEvent> i
 
     @Override
     public ClickType getClickType() { return this.clickType; }
+
+    @Override
+    public InventoryAction getAction() { return this.action; }
 
 }

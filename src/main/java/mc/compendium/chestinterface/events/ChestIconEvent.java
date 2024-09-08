@@ -8,20 +8,20 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
 public class ChestIconEvent<
-    BukkitEventType extends InventoryEvent
-> extends ChestInterfaceEvent<BukkitEventType> {
+    OriginalEventType extends InventoryEvent
+> extends ChestInterfaceEvent<OriginalEventType> {
 
     private final AbstractChestIcon<?> icon;
     private final ItemStack item;
 
     //
 
-    public ChestIconEvent(BukkitEventType bukkitEvent, HumanEntity player, Inventory inventory, ChestInterface<?, ?> chestInterface, AbstractChestIcon<?> icon, ItemStack item) {
-        this(bukkitEvent, player, inventory, chestInterface, icon, item, true);
+    public ChestIconEvent(OriginalEventType originalEvent, HumanEntity player, Inventory inventory, ChestInterface<?, ?> chestInterface, AbstractChestIcon<?> icon, ItemStack item) {
+        this(originalEvent, player, inventory, chestInterface, icon, item, true);
     }
 
-    public ChestIconEvent(BukkitEventType bukkitEvent, HumanEntity player, Inventory inventory, ChestInterface<?, ?> chestInterface, AbstractChestIcon<?> icon, ItemStack item, boolean cancellable) {
-        super(bukkitEvent, player, inventory, chestInterface, cancellable);
+    public ChestIconEvent(OriginalEventType originalEvent, HumanEntity player, Inventory inventory, ChestInterface<?, ?> chestInterface, AbstractChestIcon<?> icon, ItemStack item, boolean cancellable) {
+        super(originalEvent, player, inventory, chestInterface, cancellable);
 
         this.icon = icon;
         this.item = item;

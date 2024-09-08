@@ -7,12 +7,12 @@ import org.bukkit.inventory.Inventory;
 
 public class HopperMenuOpenEvent extends MenuOpenEvent<HopperMenu<?>> {
 
-    public HopperMenuOpenEvent(InventoryOpenEvent bukkitEvent, HumanEntity entity, Inventory inventory, HopperMenu<?> menu) {
-        this(bukkitEvent, entity, inventory, menu, true);
+    public HopperMenuOpenEvent(InventoryOpenEvent originalEvent, HumanEntity entity, Inventory inventory, HopperMenu<?> menu) {
+        this(originalEvent, entity, inventory, menu, true);
     }
 
-    public HopperMenuOpenEvent(InventoryOpenEvent bukkitEvent, HumanEntity entity, Inventory inventory, HopperMenu<?> menu, boolean cancellable) {
-        super(bukkitEvent, entity, inventory, menu, cancellable);
+    public HopperMenuOpenEvent(InventoryOpenEvent originalEvent, HumanEntity entity, Inventory inventory, HopperMenu<?> menu, boolean cancellable) {
+        super(originalEvent, entity, inventory, menu, cancellable);
     }
 
 }

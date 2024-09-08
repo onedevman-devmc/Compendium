@@ -11,12 +11,12 @@ public class AnvilInputSubmitEvent extends AnvilInputEvent<InventoryClickEvent> 
 
     //
 
-    public AnvilInputSubmitEvent(InventoryClickEvent bukkitEvent, HumanEntity entity, Inventory inventory, AnvilInput anvilInput, String text) {
-        this(bukkitEvent, entity, inventory, anvilInput, text, true);
+    public AnvilInputSubmitEvent(InventoryClickEvent originalEvent, HumanEntity entity, Inventory inventory, AnvilInput anvilInput, String text) {
+        this(originalEvent, entity, inventory, anvilInput, text, true);
     }
 
-    public AnvilInputSubmitEvent(InventoryClickEvent bukkitEvent, HumanEntity entity, Inventory inventory, AnvilInput anvilInput, String text, boolean cancellable) {
-        super(bukkitEvent, entity, inventory, anvilInput, cancellable);
+    public AnvilInputSubmitEvent(InventoryClickEvent originalEvent, HumanEntity entity, Inventory inventory, AnvilInput anvilInput, String text, boolean cancellable) {
+        super(originalEvent, entity, inventory, anvilInput, cancellable);
 
         //
 

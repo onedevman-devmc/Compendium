@@ -4,6 +4,7 @@ import mc.compendium.chestinterface.components.AbstractChestIcon;
 import mc.compendium.chestinterface.components.BasicMenu;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.inventory.ClickType;
+import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.Inventory;
@@ -19,25 +20,26 @@ public abstract class MenuClickEvent<
     private final int slot;
     private final InventoryType.SlotType slotType;
     private final ClickType clickType;
+    private final InventoryAction action;
     private final AbstractChestIcon<?> icon;
 
     //
 
     public MenuClickEvent(
-        InventoryClickEvent bukkitEvent, HumanEntity entity, Inventory inventory, MenuType menu, ItemStack cursorItem,
-        ItemStack clickedItem, Inventory clickedInventory, int slot, InventoryType.SlotType slotType, ClickType clickType,
+        InventoryClickEvent originalEvent, HumanEntity entity, Inventory inventory, MenuType menu, ItemStack cursorItem,
+        ItemStack clickedItem, Inventory clickedInventory, int slot, InventoryType.SlotType slotType, ClickType clickType, InventoryAction action,
         AbstractChestIcon<?> icon
     ) {
-        this(bukkitEvent, entity, inventory, menu, cursorItem, clickedItem, clickedInventory, slot, slotType, clickType, icon, true);
+        this(originalEvent, entity, inventory, menu, cursorItem, clickedItem, clickedInventory, slot, slotType, clickType, action, icon, true);
     }
 
     public MenuClickEvent(
-        InventoryClickEvent bukkitEvent, HumanEntity entity, Inventory inventory, MenuType menu, ItemStack cursorItem,
-        ItemStack clickedItem, Inventory clickedInventory, int slot, InventoryType.SlotType slotType, ClickType clickType,
+        InventoryClickEvent originalEvent, HumanEntity entity, Inventory inventory, MenuType menu, ItemStack cursorItem,
+        ItemStack clickedItem, Inventory clickedInventory, int slot, InventoryType.SlotType slotType, ClickType clickType, InventoryAction action,
         AbstractChestIcon<?> icon,
         boolean cancellable
     ) {
-        super(bukkitEvent, entity, inventory, menu, cancellable);
+        super(originalEvent, entity, inventory, menu, cancellable);
 
         this.cursorItem = cursorItem;
         this.clickedItem = clickedItem;
@@ -45,6 +47,8 @@ public abstract class MenuClickEvent<
         this.slot = slot;
         this.slotType = slotType;
         this.clickType = clickType;
+        this.action = action;
+
         this.icon = icon;
     }
 
@@ -68,6 +72,11 @@ public abstract class MenuClickEvent<
 
     @Override
     public ClickType getClickType() { return this.clickType; }
+
+    @Override
+    public InventoryAction getAction() { return this.action; }
+
+    //
 
     public AbstractChestIcon<?> getIcon() { return this.icon; }
 

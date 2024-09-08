@@ -9,12 +9,12 @@ public abstract class MenuOpenEvent<
     MenuType extends BasicMenu<?, ?, ?>
 > extends BasicMenuEvent<InventoryOpenEvent, MenuType> {
 
-    public MenuOpenEvent(InventoryOpenEvent bukkitEvent, HumanEntity entity, Inventory inventory, MenuType menu) {
-        this(bukkitEvent, entity, inventory, menu, true);
+    public MenuOpenEvent(InventoryOpenEvent originalEvent, HumanEntity entity, Inventory inventory, MenuType menu) {
+        this(originalEvent, entity, inventory, menu, true);
     }
 
-    public MenuOpenEvent(InventoryOpenEvent bukkitEvent, HumanEntity entity, Inventory inventory, MenuType menu, boolean cancellable) {
-        super(bukkitEvent, entity, inventory, menu, cancellable);
+    public MenuOpenEvent(InventoryOpenEvent originalEvent, HumanEntity entity, Inventory inventory, MenuType menu, boolean cancellable) {
+        super(originalEvent, entity, inventory, menu, cancellable);
     }
 
 }

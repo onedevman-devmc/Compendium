@@ -5,15 +5,15 @@ import org.bukkit.entity.HumanEntity;
 import org.bukkit.inventory.MerchantInventory;
 
 public class TradeInterfaceEvent<
-    BukkitEventType extends org.bukkit.event.Event
-> extends InterfaceEvent<BukkitEventType, MerchantInventory, TradeInterface<?>> {
+    OriginalEventType
+> extends InterfaceEvent<OriginalEventType, MerchantInventory, TradeInterface<?>> {
 
-    public TradeInterfaceEvent(BukkitEventType bukkitEvent, HumanEntity entity, MerchantInventory inventory, TradeInterface<?> tradeInterface) {
-        this(bukkitEvent, entity, inventory, tradeInterface, true);
+    public TradeInterfaceEvent(OriginalEventType originalEvent, HumanEntity entity, MerchantInventory inventory, TradeInterface<?> tradeInterface) {
+        this(originalEvent, entity, inventory, tradeInterface, true);
     }
 
-    public TradeInterfaceEvent(BukkitEventType bukkitEvent, HumanEntity entity, MerchantInventory inventory, TradeInterface<?> tradeInterface, boolean cancellable) {
-        super(bukkitEvent, entity, inventory, tradeInterface, cancellable);
+    public TradeInterfaceEvent(OriginalEventType originalEvent, HumanEntity entity, MerchantInventory inventory, TradeInterface<?> tradeInterface, boolean cancellable) {
+        super(originalEvent, entity, inventory, tradeInterface, cancellable);
     }
 
 }

@@ -7,12 +7,12 @@ import org.bukkit.inventory.Inventory;
 
 public class AnvilInputOpenEvent extends AnvilInputEvent<InventoryOpenEvent> {
 
-    public AnvilInputOpenEvent(InventoryOpenEvent bukkitEvent, HumanEntity entity, Inventory inventory, AnvilInput anvilInput) {
-        this(bukkitEvent, entity, inventory, anvilInput, true);
+    public AnvilInputOpenEvent(InventoryOpenEvent originalEvent, HumanEntity entity, Inventory inventory, AnvilInput anvilInput) {
+        this(originalEvent, entity, inventory, anvilInput, true);
     }
 
-    public AnvilInputOpenEvent(InventoryOpenEvent bukkitEvent, HumanEntity entity, Inventory inventory, AnvilInput anvilInput, boolean cancellable) {
-        super(bukkitEvent, entity, inventory, anvilInput, cancellable);
+    public AnvilInputOpenEvent(InventoryOpenEvent originalEvent, HumanEntity entity, Inventory inventory, AnvilInput anvilInput, boolean cancellable) {
+        super(originalEvent, entity, inventory, anvilInput, cancellable);
     }
 
 }

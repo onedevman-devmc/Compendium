@@ -17,11 +17,13 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.Plugin;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 public class AnvilInput extends ChestInterface<AnvilInputConfig, AnvilInputEvent<?>> implements InterfaceEventListener, ProtocolEventListener {
@@ -33,17 +35,39 @@ public class AnvilInput extends ChestInterface<AnvilInputConfig, AnvilInputEvent
     //
 
     @EventHandler
-    private void onPlayerItemRenaming(IncomingPacketEvent<PacketPlayInItemName> event) throws IllegalAccessException {
-        String playerUuid = event.getPlayer().getUniqueId().toString();
+    public void onPlayerItemRenaming(IncomingPacketEvent<PacketPlayInItemName> event) throws IllegalAccessException {
+        Player player = event.getPlayer();
+        String playerUuid = player.getUniqueId().toString();
         if(!this.processingInputPlayers.containsKey(playerUuid)) return;
 
         Pair<Inventory, String> pair = this.processingInputPlayers.remove(playerUuid);
-        if(!event.getPlayer().getOpenInventory().getTopInventory().equals(pair.first())) return;
+        if(!player.getOpenInventory().getTopInventory().equals(pair.first())) return;
 
         PacketWrapper<PacketPlayInItemName> wrapper = new PacketWrapper<>(event.getPacket());
         String inputText = wrapper.all(String.class).get(0);
 
-        this.processingInputPlayers.put(playerUuid, Pair.of(pair.first(), inputText));
+        Inventory interfaceInventory = player.getOpenInventory().getTopInventory();
+        AnvilInputWritingEvent writingEvent = new AnvilInputWritingEvent(null, player, interfaceInventory, this, inputText);
+        boolean accepted = this.handle(writingEvent);
+        if(!accepted) return;
+
+        String resultText = writingEvent.getResultText();
+
+        ItemStack resultItem = interfaceInventory.getItem(DEFAULT_ANVIL_FIRST_INPUT_SLOT);
+        if(resultItem != null) {
+            ItemStack resultItemClone = resultItem.clone();
+            ItemMeta meta = Objects.requireNonNull(resultItemClone.getItemMeta());
+
+            meta.setDisplayName(resultText);
+            resultItemClone.setItemMeta(meta);
+
+            Bukkit.getScheduler().runTaskLater(this.plugin, () -> {
+                interfaceInventory.setItem(DEFAULT_ANVIL_OUTPUT_SLOT, resultItemClone);
+                player.updateInventory();
+            }, 1L);
+        }
+
+        this.processingInputPlayers.put(playerUuid, Pair.of(pair.first(), resultText));
     }
 
     //
@@ -74,7 +98,7 @@ public class AnvilInput extends ChestInterface<AnvilInputConfig, AnvilInputEvent
             Pair<Inventory, String> pair = this.processingInputPlayers.get(event.getPlayer().getUniqueId().toString());
             String inputText = pair.last();
 
-            AnvilInputSubmitEvent inputEvent = new AnvilInputSubmitEvent(event.getBukkitEvent(), event.getPlayer(), event.getInventory(), this, inputText);
+            AnvilInputSubmitEvent inputEvent = new AnvilInputSubmitEvent(event.getOriginalEvent(), event.getPlayer(), event.getInventory(), this, inputText);
             boolean accepted = this.handle(inputEvent);
 
             player.closeInventory();
@@ -88,6 +112,7 @@ public class AnvilInput extends ChestInterface<AnvilInputConfig, AnvilInputEvent
 
     //
 
+    private final Plugin plugin;
     private final Map<String, Pair<Inventory, String>> processingInputPlayers = new HashMap<>();
 
     //
@@ -101,12 +126,18 @@ public class AnvilInput extends ChestInterface<AnvilInputConfig, AnvilInputEvent
 
         //
 
-        ProtocolManager protocolManager = new ProtocolManager(plugin);
+        this.plugin = plugin;
+
+        ProtocolManager protocolManager = new ProtocolManager(this.plugin);
         protocolManager.enable();
         protocolManager.addListener(this);
 
         this.addListener(this);
     }
+
+    //
+
+    public Plugin getPlugin() { return this.plugin; }
 
     //
 

@@ -7,9 +7,7 @@ import mc.compendium.chestinterface.events.*;
 import mc.compendium.utils.bukkit.Inventories;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.HumanEntity;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
-import org.bukkit.event.Listener;
+import org.bukkit.event.*;
 import org.bukkit.event.inventory.*;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -19,6 +17,7 @@ import org.bukkit.inventory.MerchantInventory;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 public record InterfaceEventBukkitListener(ChestInterfaceApi api) implements Listener {
 
@@ -70,7 +69,7 @@ public record InterfaceEventBukkitListener(ChestInterfaceApi api) implements Lis
         Inventory inventory = event.getInventory();
         HumanEntity player = event.getPlayer();
 
-        ChestInterface<?, ?> chestInterface = null;
+        BasicInterface<?, ?, ?> basicInterface = null;
 
         boolean accepted = false;
 
@@ -80,11 +79,15 @@ public record InterfaceEventBukkitListener(ChestInterfaceApi api) implements Lis
             Merchant merchant = merchantInventory.getMerchant();
 
             TradeInterface<?> tradeInterface = TradeInterface.getAssociated(merchant);
+            basicInterface = tradeInterface;
+
             if (tradeInterface == null) return;
 
             accepted = tradeInterface.handle(new TradeInterfaceCloseEvent(event, player, merchantInventory, tradeInterface));
         } else {
-            chestInterface = ChestInterface.getAssociated(inventory);
+            ChestInterface<?, ?> chestInterface = ChestInterface.getAssociated(inventory);
+            basicInterface = chestInterface;
+
             if (chestInterface == null) return;
 
             if (chestInterface instanceof ChestMenu<?> menu)
@@ -97,11 +100,11 @@ public record InterfaceEventBukkitListener(ChestInterfaceApi api) implements Lis
 
         //
 
-        final ChestInterface<?, ?> finalChestInterface = chestInterface;
+        final BasicInterface<?, ?, ?> finalChestInterface = basicInterface;
         if (!accepted) {
             Bukkit.getScheduler().scheduleSyncDelayedTask(
                 this.api().getPlugin(), () -> {
-                    if (finalChestInterface != null && !finalChestInterface.equals(ChestInterface.getAssociated(player.getOpenInventory().getTopInventory())))
+                    if (!finalChestInterface.equals(ChestInterface.getAssociated(player.getOpenInventory().getTopInventory())))
                         player.openInventory(inventory);
                 },
                 1L
@@ -133,6 +136,7 @@ public record InterfaceEventBukkitListener(ChestInterfaceApi api) implements Lis
         int slot = event.getSlot();
         InventoryType.SlotType slotType = event.getSlotType();
         ClickType clickType = event.getClick();
+        InventoryAction action = event.getAction();
         TradeSlotType tradeSlotType = TradeSlotType.getBySlot(slot);
 
         //
@@ -145,7 +149,7 @@ public record InterfaceEventBukkitListener(ChestInterfaceApi api) implements Lis
 
             TradeInterfaceClickEvent clickEvent = new TradeInterfaceClickEvent(
                 event, player, merchantInventory, tradeInterface,
-                cursorItem, clickedItem, clickedInventory, slot, slotType, clickType,
+                cursorItem, clickedItem, clickedInventory, slot, slotType, clickType, action,
                 tradeSlotType
             );
             accepted = tradeInterface.handle(clickEvent);
@@ -171,23 +175,27 @@ public record InterfaceEventBukkitListener(ChestInterfaceApi api) implements Lis
                         requestedUses = 1;
                     } else if (TradeEvent.MULTIPLE_TRADE_BUKKIT_ACTIONS.contains(inventoryAction)) {
                         tradeAction = TradeAction.MULTIPLE_TRADE;
+                        ItemStack tradeResultItem = trade.getResult();
 
                         requestedUses = TradeEvent.calculateMaxTheoricalRecipeUses(trade, givenIngredients.get(0), givenIngredients.get(1));
 
-                        ItemStack theoricalResultItemStack = trade.getResult().clone();
-                        theoricalResultItemStack.setAmount(requestedUses);
+                        ItemStack theoricalResultItemStack = tradeResultItem.clone();
+                        theoricalResultItemStack.setAmount(theoricalResultItemStack.getAmount() * requestedUses);
+
+                        Inventory checkInventory = Bukkit.createInventory(null, 9 * 4);
+                        checkInventory.setMaxStackSize(theoricalResultItemStack.getMaxStackSize());
 
                         requestedUses = Inventories.getContainableQuantityIn(
-                            Inventories.copyContentInto(player.getInventory().getStorageContents(), Bukkit.createInventory(null, 9 * 4)),
+                            Inventories.copyContentInto(player.getInventory().getStorageContents(), checkInventory),
                             theoricalResultItemStack
-                        );
+                        ) / tradeResultItem.getAmount();
                     }
 
                     //
 
                     TradeEvent tradeEvent = new TradeEvent(
                         event, player, merchantInventory, tradeInterface,
-                        cursorItem, clickedItem, clickedInventory, slot, slotType, clickType,
+                        cursorItem, clickedItem, clickedInventory, slot, slotType, clickType, action,
                         tradeSlotType, recipeIndex, trade, requestedUses, givenIngredients, tradeAction
                     );
 
@@ -206,13 +214,13 @@ public record InterfaceEventBukkitListener(ChestInterfaceApi api) implements Lis
 
             if (chestInterface instanceof ChestMenu<?> menu) {
                 if(clickedInInterfaceInventory) icon = menu.getIcon(slot);
-                chestInterfaceEvent = new ChestMenuClickEvent(event, player, inventory, menu, cursorItem, clickedItem, clickedInventory, slot, slotType, clickType, icon);
+                chestInterfaceEvent = new ChestMenuClickEvent(event, player, inventory, menu, cursorItem, clickedItem, clickedInventory, slot, slotType, clickType, action, icon);
             } else if (chestInterface instanceof HopperMenu<?> menu) {
                 if(clickedInInterfaceInventory) icon = menu.getIcon(slot);
-                chestInterfaceEvent = new HopperMenuClickEvent(event, player, inventory, menu, cursorItem, clickedItem, clickedInventory, slot, slotType, clickType, icon);
+                chestInterfaceEvent = new HopperMenuClickEvent(event, player, inventory, menu, cursorItem, clickedItem, clickedInventory, slot, slotType, clickType, action, icon);
             } else if (chestInterface instanceof AnvilInput anvilInput) {
                 if(clickedInInterfaceInventory) icon = anvilInput.config().inputIcon();
-                chestInterfaceEvent = new AnvilInputClickEvent(event, player, inventory, anvilInput, cursorItem, clickedItem, clickedInventory, slot, slotType, clickType);
+                chestInterfaceEvent = new AnvilInputClickEvent(event, player, inventory, anvilInput, cursorItem, clickedItem, clickedInventory, slot, slotType, clickType, action);
             }
 
             if (chestInterfaceEvent != null) {
@@ -220,7 +228,7 @@ public record InterfaceEventBukkitListener(ChestInterfaceApi api) implements Lis
             }
 
             if (icon != null) {
-                ChestIconClickEvent iconClickEvent = new ChestIconClickEvent(event, player, inventory, chestInterface, icon, cursorItem, clickedItem, clickedInventory, slot, slotType, clickType);
+                ChestIconClickEvent iconClickEvent = new ChestIconClickEvent(event, player, inventory, chestInterface, icon, cursorItem, clickedItem, clickedInventory, slot, slotType, clickType, action);
                 iconClickEvent.setCancelled(!accepted);
                 accepted = icon.handle(iconClickEvent);
             }
@@ -230,6 +238,16 @@ public record InterfaceEventBukkitListener(ChestInterfaceApi api) implements Lis
 
         event.setCancelled(!accepted);
     }
+
+    //
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    private void onDragInInventory(InventoryDragEvent event) {
+        if(Objects.equals(event.getInventorySlots(), event.getRawSlots()))
+            this.cancelUnhandledInterfaceBukkitEvent(event);
+    }
+
+    //
 
     @EventHandler
     private void onSelectTrade(org.bukkit.event.inventory.TradeSelectEvent event) {
@@ -257,6 +275,29 @@ public record InterfaceEventBukkitListener(ChestInterfaceApi api) implements Lis
         //
 
         event.setCancelled(!accepted);
+    }
+
+    //
+
+    private void cancelUnhandledInterfaceBukkitEvent(Event event) {
+        if(!(event instanceof InventoryEvent inventoryEvent)) return;
+        if(!(inventoryEvent instanceof Cancellable)) return;
+
+        if(!this.api().enabled()) return;
+
+        //
+
+        Inventory inventory = inventoryEvent.getInventory();
+        BasicInterface<?, ?, ?> basicInterface = null;
+
+        //
+
+        if (inventoryEvent.getInventory() instanceof MerchantInventory merchantInventory) basicInterface = TradeInterface.getAssociated(merchantInventory.getMerchant());
+        else basicInterface = ChestInterface.getAssociated(inventory);
+
+        //
+
+        ((Cancellable) inventoryEvent).setCancelled(basicInterface != null);
     }
 
 }

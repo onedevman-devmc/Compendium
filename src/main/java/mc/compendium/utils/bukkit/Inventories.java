@@ -1,16 +1,9 @@
 package mc.compendium.utils.bukkit;
 
 import org.bukkit.Bukkit;
-import org.bukkit.Material;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.util.io.BukkitObjectInputStream;
-import org.bukkit.util.io.BukkitObjectOutputStream;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.Base64;
 import java.util.Map;
 
 public class Inventories {
@@ -39,6 +32,7 @@ public class Inventories {
         int quantity = itemStack.getAmount();
 
         Inventory checkInventory = copyInventoryInto(inventory, Bukkit.createInventory(null, inventory.getSize()));
+        checkInventory.setMaxStackSize(inventory.getMaxStackSize());
 
         Map<Integer, ItemStack> remainingMap = checkInventory.addItem(itemStack.clone());
         if(!remainingMap.isEmpty()) quantity = quantity - remainingMap.get(0).getAmount();
@@ -53,21 +47,7 @@ public class Inventories {
     }
 
     public static String serializeContent(ItemStack[] content) {
-        ByteArrayOutputStream outStream = new ByteArrayOutputStream();
-
-        try(final BukkitObjectOutputStream bukkitOutStream = new BukkitObjectOutputStream(outStream)) {
-            bukkitOutStream.writeInt(content.length);
-
-            for(ItemStack itemStack : content) {
-                bukkitOutStream.writeObject(itemStack == null ? new ItemStack(Material.AIR) : itemStack);
-            }
-
-            bukkitOutStream.flush();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        return Base64.getEncoder().encodeToString(outStream.toByteArray());
+        return BukkitObjects.serialize(content);
     }
 
     //
@@ -77,21 +57,7 @@ public class Inventories {
     }
 
     public static ItemStack[] deserializeContent(String serializedContent) {
-        ByteArrayInputStream inStream = new ByteArrayInputStream(Base64.getDecoder().decode(serializedContent));
-
-        ItemStack[] content;
-
-        try(final BukkitObjectInputStream bukkitInStream = new BukkitObjectInputStream(inStream)) {
-            content = new ItemStack[bukkitInStream.readInt()];
-
-            for(int i = 0; i < content.length; i++) {
-                content[i] = (ItemStack) bukkitInStream.readObject();
-            }
-        } catch (IOException | ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-
-        return content;
+        return BukkitObjects.deserializeArray(serializedContent, ItemStack.class);
     }
 
 }

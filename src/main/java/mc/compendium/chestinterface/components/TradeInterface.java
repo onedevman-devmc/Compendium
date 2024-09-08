@@ -34,7 +34,7 @@ public class TradeInterface<
     public void onTrade(TradeEvent event) {
         Trade trade = event.getTrade();
         List<ItemStack> givenPrices = event.getGivenPrices();
-        TradeAction tradeAction = event.getAction();
+        TradeAction tradeAction = event.getTradeAction();
 
         if(TradeAction.UNKNOWN.equals(tradeAction)) return;
 
@@ -49,7 +49,14 @@ public class TradeInterface<
             event.setCancelled(true);
 
             tradeSlotTypesToUpdate = Set.of(TradeSlotType.FIRST_INGREDIENT, TradeSlotType.SECOND_INGREDIENT);
-            event.getPlayer().getInventory().addItem(tradeResult.get(TradeSlotType.RESULT));
+
+            ItemStack resultItem = tradeResult.get(TradeSlotType.RESULT);
+
+            int previousMaxStackSize = event.getPlayer().getInventory().getMaxStackSize();
+            event.getPlayer().getInventory().setMaxStackSize(resultItem.getMaxStackSize());
+
+            event.getPlayer().getInventory().addItem(resultItem);
+            event.getPlayer().getInventory().setMaxStackSize(previousMaxStackSize);
         }
 
         for(TradeSlotType tradeSlotTypeToUpdate : tradeSlotTypesToUpdate)

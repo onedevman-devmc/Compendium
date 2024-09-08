@@ -6,26 +6,26 @@ import org.bukkit.entity.HumanEntity;
 import org.bukkit.inventory.Inventory;
 
 public abstract class InterfaceEvent<
-    BukkitEventType extends org.bukkit.event.Event,
+    OriginalEventType,
     InventoryType extends Inventory,
     I extends BasicInterface<?, InventoryType, ?>
 > extends Event {
 
-    private final BukkitEventType bukkitEvent;
+    private final OriginalEventType originalEvent;
     private final HumanEntity entity;
     private final InventoryType inventory;
     private final I relevantInterface;
 
     //
 
-    public InterfaceEvent(BukkitEventType bukkitEvent, HumanEntity entity, InventoryType inventory, I relevantInterface) {
-        this(bukkitEvent, entity, inventory, relevantInterface, true);
+    public InterfaceEvent(OriginalEventType originalEvent, HumanEntity entity, InventoryType inventory, I relevantInterface) {
+        this(originalEvent, entity, inventory, relevantInterface, true);
     }
 
-    public InterfaceEvent(BukkitEventType bukkitEvent, HumanEntity entity, InventoryType inventory, I relevantInterface, boolean cancellable) {
+    public InterfaceEvent(OriginalEventType originalEvent, HumanEntity entity, InventoryType inventory, I relevantInterface, boolean cancellable) {
         super(cancellable);
 
-        this.bukkitEvent = bukkitEvent;
+        this.originalEvent = originalEvent;
         this.entity = entity;
         this.inventory = inventory;
         this.relevantInterface = relevantInterface;
@@ -33,7 +33,7 @@ public abstract class InterfaceEvent<
 
     //
 
-    public BukkitEventType getBukkitEvent() { return this.bukkitEvent; }
+    public OriginalEventType getOriginalEvent() { return this.originalEvent; }
 
     public HumanEntity getPlayer() { return this.entity; }
 
